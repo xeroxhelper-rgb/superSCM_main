@@ -117,7 +117,7 @@ select item_id, item_name, n_periods, n_nonzero_periods,
        end as demand_type,
        case
          when n_periods < 24 then null
-         when not coalesce(all_months_observed, false) then null
+         when calendar_month_count <> 12 or not coalesce(all_months_observed, false) then null
          when overall_month_mean = 0 then null
          else (month_mean_stddev / nullif(overall_month_mean, 0) >= 0.10)
        end as seasonality,
@@ -130,7 +130,7 @@ select item_id, item_name, n_periods, n_nonzero_periods,
          when recent_count < 3 or prior_count < 3 then 'INSUFFICIENT_RECENT_PERIODS'
          when prior_mean = 0 then 'ZERO_PRIOR_MEAN'
          when n_periods < 24 then 'INSUFFICIENT_PERIODS'
-         when not coalesce(all_months_observed, false) then 'INSUFFICIENT_SEASONAL_DATA'
+         when calendar_month_count <> 12 or not coalesce(all_months_observed, false) then 'INSUFFICIENT_SEASONAL_DATA'
          when overall_month_mean = 0 then 'ZERO_OVERALL_MEAN'
          else null
        end as reason_code,
