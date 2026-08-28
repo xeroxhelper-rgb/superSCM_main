@@ -207,3 +207,39 @@ from core.model_config
 where engine = 'PYTHON'
 order by model_id;
 ```
+
+## 2026-08-28 — STEP 8 Python Forecast migration의 Demand Profile 뷰 누락
+
+### 오류
+
+Supabase SQL Editor에서 `20260828000700_step8_python_forecast.sql` 실행 시 다음 오류가 발생했습니다.
+
+```text
+ERROR: 42P01: relation "analytics.v_sku_demand_profile" does not exist
+```
+
+### 원인
+
+`analytics.v_sku_demand_profile`은 STEP 5 migration인 `20260828000400_step5_demand_profile.sql`에서 생성됩니다. STEP 8 migration은 Python Forecast Service가 Demand Profile을 조회할 수 있도록 이 뷰에 `service_role` SELECT 권한을 부여하므로, STEP 5가 적용되지 않은 상태에서는 마지막 `grant` 구문에서 중단됩니다.
+
+### 해결책
+
+STEP 5부터 아래 순서로 각 migration 파일 전체를 새 SQL Editor query에서 실행합니다.
+
+```text
+20260828000400_step5_demand_profile.sql
+20260828000500_step6_forecast_engine.sql
+20260828000600_step7_backtest_champion.sql
+20260828000700_step8_python_forecast.sql
+```
+
+이미 성공한 migration은 다시 실행하지 않아도 됩니다. STEP 5 실행 후 아래 쿼리로 뷰 존재 여부를 확인합니다.
+
+```sql
+select table_schema, table_name
+from information_schema.views
+where table_schema = 'analytics'
+  and table_name in ('v_sku_demand_profile', 'v_demand_profile_kpi');
+```
+
+결과에 두 뷰가 표시되면 STEP 8 파일 전체를 다시 실행합니다. 화면에 보이는 `Diagnose blocked queries` 패널은 현재 SQL 오류의 원인이 아니며 닫아도 됩니다.
