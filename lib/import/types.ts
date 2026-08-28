@@ -43,3 +43,33 @@ export type ParsedImport = {
   rows: SourceRow[];
   totalRows: number;
 };
+
+export type MappedRow = {
+  rowNumber: number;
+  source: SourceRow;
+  normalized: Record<string, string>;
+};
+
+export type ValidationIssue = {
+  rowNumber: number;
+  fieldName: string;
+  errorCode: string;
+  errorMessage: string;
+  severity: ValidationSeverity;
+  originalValue: string;
+};
+
+export type ValidationContext = {
+  knownItems?: Set<string>;
+  knownSuppliers?: Set<string>;
+  existingKeys?: Set<string>;
+  duplicateSeverity?: ValidationSeverity;
+};
+
+export type ValidationSummary = {
+  rows: Array<{ rowNumber: number; status: ValidationStatus }>;
+  issues: ValidationIssue[];
+  successRows: number;
+  warningRows: number;
+  errorRows: number;
+};
