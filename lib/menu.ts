@@ -36,6 +36,7 @@ export const menuByRole: Record<MenuRole, MenuItem[]> = {
     { href: '/admin/forecast-runs', label: 'Forecast 실행 이력', description: '실행 결과와 stale 상태', icon: History, section: 'ADMIN' },
     { href: '/admin/backtest-runs', label: 'Backtest 실행', description: '검증 성능 계산 실행', icon: History, section: 'ADMIN' },
     { href: '/admin/champions', label: 'Champion 관리', description: '모델 선정과 변경 이력', icon: WandSparkles, section: 'ADMIN' },
+    { href: '/admin/python-forecast', label: 'Python Forecast', description: '고급 모델 배치 실행', icon: WandSparkles, section: 'ADMIN' },
   ],
 };
 
