@@ -120,3 +120,59 @@ begin
     execute format('create trigger %I_set_updated_at before update on core.%I for each row execute function core.step3_set_updated_at()', table_name, table_name);
   end loop;
 end $$;
+
+create or replace view core.v_train_demand as
+select u.usage_id, u.item_id, u.use_date, u.qty, u.warehouse, u.note,
+       u.batch_id, u.source_type, u.loaded_at, u.source_record_id
+from raw.usage_history u
+join core.forecast_setting s on s.setting_id = 1
+where s.train_start is not null
+  and s.train_end is not null
+  and u.use_date between s.train_start and s.train_end;
+
+create or replace view core.v_test_actual as
+select u.usage_id, u.item_id, u.use_date, u.qty, u.warehouse, u.note,
+       u.batch_id, u.source_type, u.loaded_at, u.source_record_id
+from raw.usage_history u
+join core.forecast_setting s on s.setting_id = 1
+where s.test_start is not null
+  and s.test_end is not null
+  and u.use_date between s.test_start and s.test_end;
+
+create or replace view analytics.v_data_coverage as
+with actual as (
+  select min(use_date) as actual_start, max(use_date) as actual_end
+  from raw.usage_history
+), setting as (
+  select train_start, train_end, test_start, test_end
+  from core.forecast_setting
+  where setting_id = 1
+)
+select actual.actual_start, actual.actual_end,
+       setting.train_start, setting.train_end, setting.test_start, setting.test_end,
+       (select count(*) from core.v_train_demand) as train_row_count,
+       (select count(*) from core.v_test_actual) as test_row_count,
+       (actual.actual_start is not null and setting.train_start is not null and setting.train_end is not null
+        and actual.actual_start <= setting.train_start and actual.actual_end >= setting.train_end) as train_window_ok,
+       (actual.actual_start is not null and setting.test_start is not null and setting.test_end is not null
+        and actual.actual_start <= setting.test_start and actual.actual_end >= setting.test_end) as test_window_ok,
+       (setting.train_end is not null and setting.test_start is not null and setting.test_start > setting.train_end) as windows_do_not_overlap
+from actual cross join setting;
+
+create or replace view analytics.v_forecast_setting_admin as
+select c.actual_start, c.actual_end, c.train_start, c.train_end, c.test_start, c.test_end,
+       s.granularity, c.train_row_count, c.test_row_count,
+       c.train_window_ok, c.test_window_ok, c.windows_do_not_overlap,
+       coalesce((select jsonb_agg(jsonb_build_object(
+         'policy_key', p.policy_key,
+         'service_level', p.service_level,
+         'review_period_days', p.review_period_days,
+         'safety_buffer_days', p.safety_buffer_days,
+         'config_value_numeric', p.config_value_numeric,
+         'config_value_text', p.config_value_text,
+         'description', p.description
+       ) order by p.policy_key from core.policy_config p where p.active), '[]'::jsonb) as policy_values,
+       (select count(*) from core.item_policy) as item_policy_count,
+       (select count(*) from core.outlier_rule where enabled) as enabled_outlier_rule_count
+from analytics.v_data_coverage c
+join core.forecast_setting s on s.setting_id = 1;
