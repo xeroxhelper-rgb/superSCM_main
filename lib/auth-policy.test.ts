@@ -6,7 +6,17 @@ import {
   defaultPathForRole,
   decideRouteAccess,
   assertAllowedAdminChange,
+  normalizeProfile,
 } from './auth-policy.ts';
+
+test('DB 사용자 row를 안전한 profile로 정규화한다', () => {
+  assert.deepEqual(normalizeProfile({ user_id: 'u1', email: 'u@example.com', name: '홍길동', department: null, role: 'ADMIN', active: true, last_login_at: null }), {
+    userId: 'u1', email: 'u@example.com', name: '홍길동', department: null, role: 'ADMIN', active: true, lastLoginAt: null,
+  });
+  assert.equal(normalizeProfile({ user_id: '', email: 'u@example.com', name: '사용자', role: 'USER', active: true }), null);
+  assert.equal(normalizeProfile({ user_id: 'u1', email: 'u@example.com', name: '사용자', role: 'OWNER', active: true }), null);
+  assert.equal(normalizeProfile({ user_id: 'u1', email: 'u@example.com', name: '사용자', role: 'USER', active: false })?.active, false);
+});
 
 test('외부 URL과 로그인 순환 경로를 next로 허용하지 않는다', () => {
   assert.equal(safeNextPath('https://evil.example'), null);

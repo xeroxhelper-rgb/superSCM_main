@@ -34,6 +34,25 @@ export function normalizeRole(value: unknown): AppRole | null {
   return value === 'ADMIN' || value === 'USER' ? value : null;
 }
 
+export function normalizeProfile(row: unknown): AppUserProfile | null {
+  if (!row || typeof row !== 'object') return null;
+  const value = row as Record<string, unknown>;
+  const userId = typeof value.user_id === 'string' ? value.user_id : '';
+  const email = typeof value.email === 'string' ? value.email : '';
+  const name = typeof value.name === 'string' ? value.name : '';
+  const role = normalizeRole(value.role);
+  if (!userId || !email || !name || !role) return null;
+  return {
+    userId,
+    email,
+    name,
+    department: typeof value.department === 'string' ? value.department : null,
+    role,
+    active: value.active === true,
+    lastLoginAt: typeof value.last_login_at === 'string' ? value.last_login_at : null,
+  };
+}
+
 export function safeNextPath(value: unknown): string | null {
   if (
     typeof value !== 'string' ||
