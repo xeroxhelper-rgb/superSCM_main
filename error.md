@@ -79,3 +79,26 @@ from information_schema.routines
 where routine_schema = 'core'
   and routine_name = 'is_admin';
 ```
+
+## 2026-08-28 — STEP 3 Forecast 설정 view의 SQL 문법 오류
+
+### 오류
+
+`20260828000200_step3_data_isolation.sql` 실행 시 다음 오류가 발생했습니다.
+
+```text
+ERROR: 42601: syntax error at or near "from"
+LINE 174: ) order by p.policy_key from core.policy_config p where p.active)
+```
+
+### 원인
+
+`analytics.v_forecast_setting_admin`의 정책 JSON 집계 구문에서 `jsonb_agg(...)`의 닫는 괄호가 누락되어 `order by` 뒤의 `from`을 SQL parser가 올바르게 해석하지 못했습니다.
+
+### 해결책
+
+`jsonb_build_object(...)`를 `jsonb_agg(...)` 안에 넣고, `order by p.policy_key` 뒤에 aggregate 닫는 괄호를 추가했습니다. 수정된 migration 전체를 SQL Editor에 다시 붙여넣고, 일부 구문이 아닌 전체 쿼리를 실행해야 합니다.
+
+### 검증
+
+로컬 회귀 테스트와 전체 테스트, TypeScript 검사, production build를 다시 실행합니다. Supabase에서 migration을 재실행한 뒤 `analytics.v_forecast_setting_admin` view가 생성되는지 확인합니다.

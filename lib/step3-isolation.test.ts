@@ -25,3 +25,11 @@ test('coverage와 관리자 view는 격리 상태와 정책값을 제공한다',
   assert.match(sql, /create or replace view analytics\.v_forecast_setting_admin/i);
   assert.match(sql, /policy_values/i);
 });
+
+test('관리자 정책 JSON 집계는 정렬 전에 aggregate를 닫는다', async () => {
+  const sql = await readFile(migrationPath, 'utf8');
+  assert.match(
+    sql,
+    /jsonb_agg\([\s\S]*order by p\.policy_key\s*\)\s*from core\.policy_config p where p\.active/i,
+  );
+});

@@ -163,15 +163,18 @@ create or replace view analytics.v_forecast_setting_admin as
 select c.actual_start, c.actual_end, c.train_start, c.train_end, c.test_start, c.test_end,
        s.granularity, c.train_row_count, c.test_row_count,
        c.train_window_ok, c.test_window_ok, c.windows_do_not_overlap,
-       coalesce((select jsonb_agg(jsonb_build_object(
-         'policy_key', p.policy_key,
-         'service_level', p.service_level,
-         'review_period_days', p.review_period_days,
-         'safety_buffer_days', p.safety_buffer_days,
-         'config_value_numeric', p.config_value_numeric,
-         'config_value_text', p.config_value_text,
-         'description', p.description
-       ) order by p.policy_key from core.policy_config p where p.active), '[]'::jsonb) as policy_values,
+       coalesce((select jsonb_agg(
+         jsonb_build_object(
+           'policy_key', p.policy_key,
+           'service_level', p.service_level,
+           'review_period_days', p.review_period_days,
+           'safety_buffer_days', p.safety_buffer_days,
+           'config_value_numeric', p.config_value_numeric,
+           'config_value_text', p.config_value_text,
+           'description', p.description
+         )
+         order by p.policy_key
+       ) from core.policy_config p where p.active), '[]'::jsonb) as policy_values,
        (select count(*) from core.item_policy) as item_policy_count,
        (select count(*) from core.outlier_rule where enabled) as enabled_outlier_rule_count
 from analytics.v_data_coverage c
