@@ -405,3 +405,5 @@
 .import-summary strong { color: var(--color-on-surface); font-size: 18px; }
 .import-validation { display: grid; gap: var(--space-4); }
 .import-confirm { display: flex; align-items: center; gap: var(--space-2); color: var(--color-on-surface-muted); font-size: 13px; }
+.import-actions { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
+.import-actions a { color: var(--color-primary); font-size: 12px; }

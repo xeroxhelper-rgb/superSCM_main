@@ -76,3 +76,14 @@ export async function rollbackBatch(batchId: string) {
   if (error) throw error;
   return data;
 }
+
+export async function getBatchErrors(batchId: string) {
+  const supabase = await createSupabaseServerClient();
+  const [{ data: staging, error: stagingError }, { data: errors, error: errorError }] = await Promise.all([
+    supabase.schema('core').from('import_staging').select('row_number, raw_data, mapped_data').eq('batch_id', batchId).order('row_number'),
+    supabase.schema('core').from('validation_error').select('row_number, field_name, error_code, error_message, severity, original_value').eq('batch_id', batchId).order('row_number'),
+  ]);
+  if (stagingError) throw stagingError;
+  if (errorError) throw errorError;
+  return { staging: staging ?? [], errors: errors ?? [] };
+}

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildValidationErrorCsv } from './history.ts';
+import { buildValidationErrorCsv, canRollback } from './history.ts';
+import type { ImportHistoryRow } from './repository-types.ts';
 
 test('오류 CSV는 ERROR와 WARNING 행만 원본 컬럼과 함께 출력한다', () => {
   const csv = buildValidationErrorCsv(
@@ -17,4 +18,12 @@ test('오류 CSV는 ERROR와 WARNING 행만 원본 컬럼과 함께 출력한다
   assert.match(csv, /ITEM001/);
   assert.match(csv, /ITEM002/);
   assert.match(csv, /"a,b"/);
+});
+
+test('rollback은 관리자이며 reversible imported batch일 때만 가능하다', () => {
+  const row = { status: 'IMPORTED', importMode: 'append' } as ImportHistoryRow;
+  assert.equal(canRollback(row, true), true);
+  assert.equal(canRollback(row, false), false);
+  assert.equal(canRollback({ ...row, importMode: 'replace' }, true), false);
+  assert.equal(canRollback({ ...row, status: 'FAILED' }, true), false);
 });

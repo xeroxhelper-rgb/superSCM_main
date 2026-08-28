@@ -1,4 +1,9 @@
 import type { MappedRow, ValidationIssue } from './types';
+import type { ImportHistoryRow } from './repository-types';
+
+export function canRollback(row: ImportHistoryRow, isAdmin: boolean): boolean {
+  return isAdmin && row.status === 'IMPORTED' && row.importMode !== 'replace';
+}
 
 function escapeCsv(value: unknown): string {
   const text = String(value ?? '');
