@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { LockKeyhole } from 'lucide-react';
 import { menuByRole, type MenuRole } from '@/lib/menu';
 
 export default function Sidebar({ role }: { role: MenuRole }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const menus = menuByRole[role];
   const sections = Array.from(new Set(menus.map((item) => item.section)));
 
@@ -27,7 +28,10 @@ export default function Sidebar({ role }: { role: MenuRole }) {
               {menus.filter((item) => item.section === section).map((item) => {
                 const Icon = item.icon;
                 const locked = item.status === 'locked';
-                const active = pathname === item.href || Boolean(item.matchPrefix && pathname.startsWith(item.matchPrefix));
+                const [itemPath, itemQuery] = item.href.split('?');
+                const active = itemQuery
+                  ? pathname === itemPath && new URLSearchParams(itemQuery).get('step') === searchParams.get('step')
+                  : pathname === item.href || Boolean(item.matchPrefix && pathname.startsWith(item.matchPrefix));
                 return locked ? (
                   <span key={item.href} className="design-nav-item locked" aria-disabled="true">
                     <span className="design-nav-icon"><Icon size={15} /></span>
