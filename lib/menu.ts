@@ -21,6 +21,8 @@ export const analysisMenuItems = [
   { href: '/analysis/stockout', label: '재고 소진 위험', description: '가용재고와 계획 리드타임 기준 위험 분석', icon: Boxes, section: 'ANALYSIS' },
   { href: '/analysis/demand-profile', label: 'SKU 수요 프로파일', description: 'SKU별 수요 패턴과 안정성 분석', icon: BarChart3, section: 'ANALYSIS' },
   { href: '/analysis/model-comparison', label: 'Forecast 모델 비교', description: '모델별 검증 성능과 Champion 비교', icon: WandSparkles, section: 'ANALYSIS' },
+  { href: '/analysis/inventory-projection', label: '재고 Projection', description: 'Forecast 기반 기간별 재고 흐름', icon: Boxes, section: 'ANALYSIS' },
+  { href: '/analysis/purchase-recommendation', label: '발주 추천', description: 'Safety Stock과 구매 정책 기반 추천', icon: ShoppingCart, section: 'ANALYSIS' },
 ] satisfies readonly MenuItem[];
 
 export const menuByRole: Record<MenuRole, MenuItem[]> = {
@@ -38,6 +40,7 @@ export const menuByRole: Record<MenuRole, MenuItem[]> = {
     { href: '/admin/masters', label: '마스터 관리', description: '품목·공급처 기준', icon: Settings2, section: 'ADMIN', status: 'locked' },
     { href: '/admin/users', label: '사용자 관리', description: '계정과 권한 관리', icon: Users, section: 'ADMIN' },
     { href: '/admin/forecast-settings', label: 'Forecast 설정', description: '학습·검증 기간 확인', icon: CalendarRange, section: 'ADMIN' },
+    { href: '/admin/scm-policies/leadtime', label: 'SCM Policies · Lead Time', description: '리드타임 정책과 변경 이력', icon: CalendarRange, section: 'ADMIN' },
     { href: '/admin/data-management', label: 'Data Management', description: '파일 적재와 검증 이력', icon: FileUp, section: 'ADMIN' },
     { href: '/admin/forecast-models', label: 'Forecast 모델', description: 'Baseline 모델 설정', icon: WandSparkles, section: 'ADMIN' },
     { href: '/admin/forecast-runs', label: 'Forecast 실행 이력', description: '실행 결과와 stale 상태', icon: History, section: 'ADMIN' },

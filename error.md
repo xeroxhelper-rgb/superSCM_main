@@ -1,5 +1,116 @@
 # 오류 기록
 
+## 2026-08-28 — STEP 9 후반부 Lead Time 조인의 중복 공통 컬럼
+
+### 오류
+
+수정본을 다시 실행했는데도 다음 오류가 반복되었습니다.
+
+```text
+ERROR: 42702: common column name "supplier_id" appears more than once in left table
+```
+
+### 원인
+
+migration 후반의 `summary` CTE에도 `left join leadtime l using (supplier_id)`가 남아 있었습니다. 앞부분 조인만 `ON` 조건으로 바뀌었고, 이 두 번째 `USING` 조인이 동일한 중복 컬럼 충돌을 계속 발생시켰습니다.
+
+### 해결책
+
+다음과 같이 명시적 조인 조건으로 변경했습니다.
+
+```sql
+left join leadtime l on l.supplier_id = i.supplier_id
+```
+
+이제 migration 전체에서 `USING (supplier_id)`에 의존하지 않습니다.
+
+## 2026-08-28 — STEP 9 Lead Time 조인의 중복 공통 컬럼
+
+### 오류
+
+Supabase SQL Editor에서 `20260828000800_step9_inventory_projection.sql` 실행 시 다음 오류가 발생했습니다.
+
+```text
+ERROR: 42702: common column name "supplier_id" appears more than once in left table
+```
+
+### 원인
+
+`core.v_effective_lead_time`에서 `analytics.v_leadtime_gap`과 `core.leadtime_plan`을 `USING (supplier_id)`로 조인했습니다. Supabase 프로젝트에 이미 존재하는 Lead Time View가 `supplier_id`를 공통 컬럼으로 중복 노출하는 상태에서는 PostgreSQL의 `USING` 조인 규칙이 모호해져 migration이 중단됩니다.
+
+### 해결책
+
+`USING (supplier_id)`를 명시적 조인 조건인 `ON lp.supplier_id = lg.supplier_id`로 변경했습니다. 명시적 별칭을 사용하면 공통 컬럼 병합을 요구하지 않으므로 기존 View 컬럼 충돌을 피할 수 있습니다.
+
+### 확인
+
+수정된 migration 전체를 다시 실행한 뒤 다음 쿼리로 View 생성을 확인합니다.
+
+```sql
+select table_schema, table_name
+from information_schema.views
+where table_schema in ('core', 'analytics')
+  and table_name in ('v_effective_lead_time', 'v_inventory_projection', 'v_stockout_risk');
+```
+
+## 2026-08-28 — STEP 9 재귀 Projection CTE의 컬럼 누락
+
+### 오류
+
+Supabase SQL Editor에서 `20260828000800_step9_inventory_projection.sql` 실행 시 다음 오류가 발생했습니다.
+
+```text
+ERROR: 42703: column current_row.inventory_data_present does not exist
+LINE 200: current_row.inventory_data_present
+```
+
+### 원인
+
+`projection` 재귀 CTE의 두 번째 SELECT가 `current_row.inventory_data_present`를 참조했지만, 원천인 `period_rows` CTE가 해당 컬럼을 생성하지 않았습니다. 첫 번째 SELECT에서는 별칭이 존재했지만 재귀 SELECT의 입력 행에는 포함되지 않아 PostgreSQL이 컬럼을 찾지 못했습니다.
+
+### 해결책
+
+`period_rows` CTE에 `(i.available_inventory is not null) as inventory_data_present`를 추가했습니다. 수정된 migration 파일 전체를 SQL Editor에서 다시 실행합니다.
+
+### 확인
+
+```sql
+select table_schema, table_name
+from information_schema.views
+where table_schema in ('core', 'analytics')
+  and table_name in ('v_inventory_projection', 'v_stockout_risk');
+```
+
+## 2026-08-28 — STEP 9 SQL의 누락된 FROM 별칭
+
+### 오류
+
+Supabase SQL Editor에서 `20260828000800_step9_inventory_projection.sql` 실행 시 다음 오류가 발생했습니다.
+
+```text
+ERROR: 42P01: missing FROM-clause entry for table "s"
+LINE 145: case when s.order_mode = 'EXCLUSIVE' ...
+```
+
+### 원인
+
+`period_rows` CTE에서 `s.order_mode`를 참조했지만 `settings` CTE를 해당 SELECT의 FROM 절에 포함하지 않았습니다. PostgreSQL은 SELECT 범위에 없는 `s` 별칭을 해석할 수 없어 migration을 중단했습니다.
+
+### 해결책
+
+`period_rows` CTE에 `cross join settings s`를 추가했습니다. 수정된 migration 파일을 다시 전체 실행하면 됩니다. 이미 일부 객체가 생성된 경우에도 `if exists`, `if not exists`, `create or replace view` 구문으로 재실행할 수 있습니다.
+
+### 확인
+
+SQL 실행 후 아래 쿼리로 Projection View가 생성되었는지 확인합니다.
+
+```sql
+select table_schema, table_name
+from information_schema.views
+where table_schema in ('core', 'analytics')
+  and table_name in ('v_inventory_projection', 'v_stockout_risk');
+```
+
 ## 2026-08-28 — Next.js route group 경로 충돌
 
 ### 오류

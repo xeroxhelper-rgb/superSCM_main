@@ -162,3 +162,35 @@ Project Settings → API → Data API → Exposed schemas
 이 설정이 없으면 조회 결과가 **에러 없이 빈 배열**로 나옵니다.
 
 조회 함수는 `lib/scm.ts` 에 모읍니다. 화면에서 supabase 를 직접 부르지 않습니다.
+
+---
+
+## STEP 9 — Inventory Projection
+
+`core.v_effective_lead_time`은 `core.leadtime_plan.planned_lead_time` 관리자 확정값을 우선 사용하고, 없으면 `analytics.v_leadtime_gap.p80_days`를 fallback으로 사용합니다. 두 값이 모두 없으면 `NO_LEADTIME`입니다.
+
+`core.v_inventory_projection`과 `analytics.v_inventory_projection`은 STEP 7 Champion Forecast, `raw.inventory`, `raw.purchase_order`, `raw.sales_order`, `raw.business_event`를 기간별로 결합합니다. Open PO는 납기예정일이 해당 기간일 때만 반영하며, Projection 계산은 SQL에서 수행합니다.
+
+### 신규 화면용 View
+
+| View | 설명 |
+|---|---|
+| `analytics.v_inventory_projection` | Beginning Inventory, Scheduled Receipt, Confirmed Sales Order, Soft Allocation, Forecast Demand, Ending Projected Inventory |
+| `analytics.v_stockout_risk` | Projection 최초 0 이하 기간, Days/Months of Supply, SAFE/WARNING/CRITICAL/CALCULATION_UNAVAILABLE |
+| `analytics.v_stockout_kpi` | 신규 Risk 상태별 품목 수와 소진 통계 |
+| `analytics.v_leadtime_policy` | 실적 P50/P80/P90, 관리자 확정값, Effective Lead Time |
+| `analytics.v_leadtime_policy_history` | Lead Time 변경 이력 |
+
+재고·Forecast·Lead Time이 없을 때는 0이나 임의 날짜로 보정하지 않고 `reason_code`를 반환합니다. 주요 사유는 `NO_INVENTORY_DATA`, `NO_FORECAST`, `NO_LEADTIME`, `INSUFFICIENT_SAMPLE`입니다.
+
+## STEP 10 — Safety Stock 및 Purchase Recommendation
+
+`analytics.v_safety_stock`은 STEP 6 Forecast Result의 `sigma`, STEP 9 Effective Lead Time, 실적 Lead Time의 `std_days`, `core.item_policy`, `core.policy_config`를 결합합니다. `sigma_DLT = sqrt(L * sigma_d^2 + d^2 * sigma_L^2)`, Safety Stock은 `Z * sigma_DLT`로 계산합니다.
+
+`analytics.v_purchase_recommendation`은 Forecast와 확정수주 중 큰 값을 Demand Basis로 사용하고, Safety Stock·현재 재고·Scheduled Receipt를 반영한 Required Qty에 MOQ와 Pack Size를 적용합니다. 계산 근거는 `calculation_trace` JSON으로 재조회할 수 있습니다. 입력이 부족하면 `CALCULATION_UNAVAILABLE`과 `reason_code`, Required Qty가 0 이하이면 `CALCULATED_NO_ORDER`와 추천수량 0을 반환합니다.
+
+| View | 설명 |
+|---|---|
+| `analytics.v_safety_stock` | SKU별 sigma_DLT, Safety Stock, 정책·Forecast Error 입력 |
+| `analytics.v_purchase_recommendation` | SKU별 Required Qty, MOQ/Pack Size 적용 추천, 권고일과 계산 trace |
+| `analytics.v_purchase_recommendation_detail` | 추천과 기간별 Projection 연결 상세 |

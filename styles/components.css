@@ -407,3 +407,8 @@
 .import-confirm { display: flex; align-items: center; gap: var(--space-2); color: var(--color-on-surface-muted); font-size: 13px; }
 .import-actions { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
 .import-actions a { color: var(--color-primary); font-size: 12px; }
+
+.detail-list { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(160px, 2fr); gap: var(--space-3) var(--space-5); margin: 0; color: var(--color-on-surface); }
+.detail-list dt { color: var(--color-on-surface-muted); }
+.detail-list dd { margin: 0; text-align: right; }
+.detail-list p { grid-column: 1 / -1; color: var(--color-on-surface-muted); }

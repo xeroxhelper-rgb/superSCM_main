@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from './supabase';
-import { normalizeBacktestRun, normalizeChampionModel, normalizeComparisonPoint, normalizeDemandProfile, normalizeDemandProfileKpi, normalizeForecastModel, normalizeForecastResult, normalizeForecastRun, normalizeLeadtimeGap, normalizeModelPerformance, normalizeStockoutKpi, normalizeStockoutRisk, type BacktestRun, type ChampionModel, type ComparisonPoint, type DemandProfile, type DemandProfileKpi, type ForecastModel, type ForecastResult, type ForecastRun, type LeadtimeGap, type ModelPerformance, type StockoutKpi, type StockoutRisk } from './scm-model';
+import { normalizePurchaseRecommendation } from './step10-safety-stock-model';
+import { normalizeBacktestRun, normalizeChampionModel, normalizeComparisonPoint, normalizeDemandProfile, normalizeDemandProfileKpi, normalizeForecastModel, normalizeForecastResult, normalizeForecastRun, normalizeInventoryProjection, normalizeLeadtimeGap, normalizeLeadtimePolicy, normalizeLeadtimePolicyHistory, normalizeModelPerformance, normalizeStockoutKpi, normalizeStockoutRisk, type BacktestRun, type ChampionModel, type ComparisonPoint, type DemandProfile, type DemandProfileKpi, type ForecastModel, type ForecastResult, type ForecastRun, type InventoryProjection, type LeadtimeGap, type LeadtimePolicy, type LeadtimePolicyHistory, type ModelPerformance, type PurchaseRecommendation, type StockoutKpi, type StockoutRisk } from './scm-model';
 
 async function analyticsRows<T>(view: string, normalize: (row: Record<string, unknown>) => T, apply?: (query: any) => any): Promise<{ rows: T[]; error: string | null }> {
   try {
@@ -85,4 +86,35 @@ export async function getStockoutKpi(): Promise<{ data: StockoutKpi | null; erro
   } catch (error) {
     return { data: null, error: error instanceof Error ? error.message : 'Supabase 조회에 실패했습니다.' };
   }
+}
+
+export function getInventoryProjection(filters?: { itemId?: string; from?: string; to?: string }): Promise<{ rows: InventoryProjection[]; error: string | null }> {
+  return analyticsRows('v_inventory_projection', normalizeInventoryProjection, (q) => {
+    let next = q.order('item_id').order('period');
+    if (filters?.itemId) next = next.eq('item_id', filters.itemId);
+    if (filters?.from) next = next.gte('period', filters.from);
+    if (filters?.to) next = next.lte('period', filters.to);
+    return next;
+  });
+}
+
+export function getLeadtimePolicy(): Promise<{ rows: LeadtimePolicy[]; error: string | null }> {
+  return analyticsRows('v_leadtime_policy', normalizeLeadtimePolicy, (q) => q.order('supplier_id'));
+}
+
+export function getLeadtimePolicyHistory(): Promise<{ rows: LeadtimePolicyHistory[]; error: string | null }> {
+  return analyticsRows('v_leadtime_policy_history', normalizeLeadtimePolicyHistory, (q) => q.order('changed_at', { ascending: false }));
+}
+
+export function getPurchaseRecommendations(filters?: { itemId?: string; riskStatus?: string }): Promise<{ rows: PurchaseRecommendation[]; error: string | null }> {
+  return analyticsRows('v_purchase_recommendation', normalizePurchaseRecommendation, (q) => {
+    let next = q.order('item_id');
+    if (filters?.itemId) next = next.eq('item_id', filters.itemId);
+    if (filters?.riskStatus) next = next.eq('risk_status', filters.riskStatus);
+    return next;
+  });
+}
+
+export function getPurchaseRecommendation(itemId: string): Promise<{ rows: PurchaseRecommendation[]; error: string | null }> {
+  return getPurchaseRecommendations({ itemId });
 }

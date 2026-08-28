@@ -18,6 +18,8 @@ test('USER 메뉴는 원래 업무 흐름과 분석 그룹 순서를 유지한�
       ['ANALYSIS', '재고 소진 위험'],
       ['ANALYSIS', 'SKU 수요 프로파일'],
       ['ANALYSIS', 'Forecast 모델 비교'],
+    ['ANALYSIS', '재고 Projection'],
+    ['ANALYSIS', '발주 추천'],
     ],
   );
 });
