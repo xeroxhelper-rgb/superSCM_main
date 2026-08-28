@@ -34,6 +34,36 @@ export type StockoutKpi = {
   avgStockoutDays: number | null;
 };
 
+export type DemandType = 'SMOOTH' | 'INTERMITTENT' | 'ERRATIC' | 'LUMPY';
+
+export type DemandProfile = {
+  itemId: string;
+  itemName: string;
+  nPeriods: number | null;
+  nNonzeroPeriods: number | null;
+  adi: number | null;
+  cv: number | null;
+  cvSquared: number | null;
+  zeroDemandRate: number | null;
+  trend: number | null;
+  recentChangeRate: number | null;
+  peakPeriod: string | null;
+  demandType: DemandType | null;
+  seasonality: boolean | null;
+  reasonCode: string | null;
+  stability: 'STABLE' | 'VARIABLE' | null;
+};
+
+export type DemandProfileKpi = {
+  totalItems: number | null;
+  nSmooth: number | null;
+  nIntermittent: number | null;
+  nErratic: number | null;
+  nLumpy: number | null;
+  nCrostonNeeded: number | null;
+  nCalculationUnavailable: number | null;
+};
+
 function value(row: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     if (row[key] !== undefined && row[key] !== null && row[key] !== '') return row[key];
@@ -46,6 +76,50 @@ function numberValue(row: Record<string, unknown>, keys: string[]) {
   if (raw === null) return null;
   const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function demandTypeValue(row: Record<string, unknown>): DemandType | null {
+  const raw = value(row, ['demand_type', 'demandType']);
+  return raw === 'SMOOTH' || raw === 'INTERMITTENT' || raw === 'ERRATIC' || raw === 'LUMPY' ? raw : null;
+}
+
+function booleanValue(row: Record<string, unknown>, keys: string[]) {
+  const raw = value(row, keys);
+  return typeof raw === 'boolean' ? raw : raw === null ? null : raw === 'true' ? true : raw === 'false' ? false : null;
+}
+
+export function normalizeDemandProfile(row: Record<string, unknown>): DemandProfile {
+  const peak = value(row, ['peak_period', 'peakPeriod']);
+  const stability = value(row, ['stability']);
+  return {
+    itemId: String(value(row, ['item_id', 'item_code', 'SKU']) ?? '미정'),
+    itemName: String(value(row, ['item_name', '품목명']) ?? '미정'),
+    nPeriods: numberValue(row, ['n_periods']),
+    nNonzeroPeriods: numberValue(row, ['n_nonzero_periods']),
+    adi: numberValue(row, ['adi']),
+    cv: numberValue(row, ['cv']),
+    cvSquared: numberValue(row, ['cv_squared', 'cv2']),
+    zeroDemandRate: numberValue(row, ['zero_demand_rate']),
+    trend: numberValue(row, ['trend', 'trend_per_period']),
+    recentChangeRate: numberValue(row, ['recent_change_rate']),
+    peakPeriod: peak === null ? null : String(peak),
+    demandType: demandTypeValue(row),
+    seasonality: booleanValue(row, ['seasonality']),
+    reasonCode: value(row, ['reason_code', 'reasonCode']) === null ? null : String(value(row, ['reason_code', 'reasonCode'])),
+    stability: stability === 'STABLE' || stability === 'VARIABLE' ? stability : null,
+  };
+}
+
+export function normalizeDemandProfileKpi(row: Record<string, unknown>): DemandProfileKpi {
+  return {
+    totalItems: numberValue(row, ['total_items']),
+    nSmooth: numberValue(row, ['n_smooth']),
+    nIntermittent: numberValue(row, ['n_intermittent']),
+    nErratic: numberValue(row, ['n_erratic']),
+    nLumpy: numberValue(row, ['n_lumpy']),
+    nCrostonNeeded: numberValue(row, ['n_croston_needed']),
+    nCalculationUnavailable: numberValue(row, ['n_calculation_unavailable']),
+  };
 }
 
 export function normalizeLeadtimeGap(row: Record<string, unknown>): LeadtimeGap {
