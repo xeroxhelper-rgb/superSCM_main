@@ -1,8 +1,9 @@
-import Link from 'next/link';
 import PageHeader from '@/components/shell/page-header';
 import Panel from '@/components/ui/panel';
-import Button from '@/components/ui/button';
+import LoginForm from '@/components/auth/login-form';
+import { safeNextPath } from '@/lib/auth-policy';
 
-export default function LoginPage() {
-  return <Panel className="auth-panel"><PageHeader eyebrow="ACCESS" title="로그인 준비 중" description="인증 기능은 다음 단계에서 연결됩니다." /><Button variant="primary" href="/">발주계획으로 돌아가기</Button><p className="muted-ui"><Link href="/admin">관리자 화면 보기</Link></p></Panel>;
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const params = await searchParams;
+  return <Panel className="auth-panel"><PageHeader eyebrow="ACCESS" title="월간 발주계획 로그인" description="등록된 계정으로 로그인해주세요." /><LoginForm next={safeNextPath(params.next) ?? '/'} /></Panel>;
 }

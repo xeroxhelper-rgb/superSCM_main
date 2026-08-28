@@ -7,7 +7,14 @@ import {
   decideRouteAccess,
   assertAllowedAdminChange,
   normalizeProfile,
+  normalizeCredentials,
 } from './auth-policy.ts';
+
+test('로그인 자격 증명을 최소 정규화한다', () => {
+  assert.deepEqual(normalizeCredentials({ email: '  user@example.com  ', password: ' p@ss ' }), { email: 'user@example.com', password: ' p@ss ' });
+  assert.equal(normalizeCredentials({ email: '', password: 'secret' }), null);
+  assert.equal(normalizeCredentials({ email: 'user@example.com', password: '' }), null);
+});
 
 test('DB 사용자 row를 안전한 profile로 정규화한다', () => {
   assert.deepEqual(normalizeProfile({ user_id: 'u1', email: 'u@example.com', name: '홍길동', department: null, role: 'ADMIN', active: true, last_login_at: null }), {

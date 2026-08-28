@@ -1,7 +1,8 @@
-import Link from 'next/link';
 import Badge from '@/components/ui/badge';
+import { logoutAction } from '@/app/(auth)/logout/actions';
+import type { AppUserProfile } from '@/lib/auth-policy';
 
-export default function Topbar({ eyebrow = 'MONTHLY PROCUREMENT CONTROL', title }: { eyebrow?: string; title: string }) {
+export default function Topbar({ eyebrow = 'MONTHLY PROCUREMENT CONTROL', title, profile }: { eyebrow?: string; title: string; profile: AppUserProfile }) {
   return (
     <header className="design-topbar">
       <div>
@@ -11,7 +12,8 @@ export default function Topbar({ eyebrow = 'MONTHLY PROCUREMENT CONTROL', title 
       <div className="design-topbar-meta">
         <Badge status="safe">SUPABASE LIVE</Badge>
         <span>기준월도 <b>2026.09</b></span>
-        <Link className="button-ui" href="/login">로그인</Link>
+        <span className="topbar-user">{profile.name} <Badge status="info">{profile.role}</Badge></span>
+        <form action={logoutAction}><button className="button-ui" type="submit">로그아웃</button></form>
       </div>
     </header>
   );

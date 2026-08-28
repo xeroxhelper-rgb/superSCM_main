@@ -53,6 +53,12 @@ export function normalizeProfile(row: unknown): AppUserProfile | null {
   };
 }
 
+export function normalizeCredentials(input: { email: unknown; password: unknown }): { email: string; password: string } | null {
+  if (typeof input.email !== 'string' || typeof input.password !== 'string') return null;
+  const email = input.email.trim();
+  return email && input.password ? { email, password: input.password } : null;
+}
+
 export function safeNextPath(value: unknown): string | null {
   if (
     typeof value !== 'string' ||
