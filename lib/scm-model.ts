@@ -64,6 +64,55 @@ export type DemandProfileKpi = {
   nCalculationUnavailable: number | null;
 };
 
+export type ForecastModel = {
+  modelId: string;
+  modelName: string;
+  family: string;
+  engine: string;
+  version: string;
+  enabled: boolean;
+  isDefault: boolean;
+  applicableDemandType: string[];
+  parameters: Record<string, unknown>;
+  description: string | null;
+};
+
+export type ForecastRun = {
+  runId: string;
+  status: 'RUNNING' | 'SUCCESS' | 'FAILED';
+  granularity: string;
+  trainStart: string | null;
+  trainEnd: string | null;
+  horizon: number | null;
+  dataSnapshotAt: string | null;
+  nModels: number | null;
+  nItems: number | null;
+  nRows: number | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  durationMs: number | null;
+  triggeredEmail: string | null;
+  message: string | null;
+  isStale: boolean | null;
+  staleReason: string | null;
+};
+
+export type ForecastResult = {
+  runId: string;
+  modelId: string;
+  modelName: string;
+  itemId: string;
+  period: string;
+  modelVersion: string;
+  predictedQty: number | null;
+  p50: number | null;
+  p80: number | null;
+  p90: number | null;
+  sigma: number | null;
+  basis: string | null;
+  reasonCode: string | null;
+};
+
 function value(row: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     if (row[key] !== undefined && row[key] !== null && row[key] !== '') return row[key];
@@ -86,6 +135,48 @@ function demandTypeValue(row: Record<string, unknown>): DemandType | null {
 function booleanValue(row: Record<string, unknown>, keys: string[]) {
   const raw = value(row, keys);
   return typeof raw === 'boolean' ? raw : raw === null ? null : raw === 'true' ? true : raw === 'false' ? false : null;
+}
+
+function jsonValue(row: Record<string, unknown>, keys: string[]) {
+  const raw = value(row, keys);
+  return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+}
+
+function stringArrayValue(row: Record<string, unknown>, keys: string[]) {
+  const raw = value(row, keys);
+  return Array.isArray(raw) ? raw.map(String) : [];
+}
+
+export function normalizeForecastModel(row: Record<string, unknown>): ForecastModel {
+  return {
+    modelId: String(value(row, ['model_id']) ?? '미정'), modelName: String(value(row, ['model_name']) ?? '미정'),
+    family: String(value(row, ['family']) ?? '미정'), engine: String(value(row, ['engine']) ?? '미정'), version: String(value(row, ['version']) ?? '미정'),
+    enabled: booleanValue(row, ['enabled']) ?? false, isDefault: booleanValue(row, ['is_default']) ?? false,
+    applicableDemandType: stringArrayValue(row, ['applicable_demand_type']), parameters: jsonValue(row, ['parameters']),
+    description: value(row, ['description']) === null ? null : String(value(row, ['description'])),
+  };
+}
+
+export function normalizeForecastRun(row: Record<string, unknown>): ForecastRun {
+  const status = value(row, ['status']);
+  return {
+    runId: String(value(row, ['run_id']) ?? '미정'), status: status === 'RUNNING' || status === 'SUCCESS' || status === 'FAILED' ? status : 'FAILED',
+    granularity: String(value(row, ['granularity']) ?? '미정'), trainStart: value(row, ['train_start']) as string | null,
+    trainEnd: value(row, ['train_end']) as string | null, horizon: numberValue(row, ['horizon']), dataSnapshotAt: value(row, ['data_snapshot_at']) as string | null,
+    nModels: numberValue(row, ['n_models']), nItems: numberValue(row, ['n_items']), nRows: numberValue(row, ['n_rows']),
+    startedAt: value(row, ['started_at']) as string | null, finishedAt: value(row, ['finished_at']) as string | null, durationMs: numberValue(row, ['duration_ms']),
+    triggeredEmail: value(row, ['triggered_email']) as string | null, message: value(row, ['message']) as string | null,
+    isStale: booleanValue(row, ['is_stale']), staleReason: value(row, ['stale_reason']) as string | null,
+  };
+}
+
+export function normalizeForecastResult(row: Record<string, unknown>): ForecastResult {
+  return {
+    runId: String(value(row, ['run_id']) ?? '미정'), modelId: String(value(row, ['model_id']) ?? '미정'), modelName: String(value(row, ['model_name']) ?? '미정'),
+    itemId: String(value(row, ['item_id']) ?? '미정'), period: String(value(row, ['period']) ?? '미정'), modelVersion: String(value(row, ['model_version']) ?? '미정'),
+    predictedQty: numberValue(row, ['predicted_qty']), p50: numberValue(row, ['p50']), p80: numberValue(row, ['p80']), p90: numberValue(row, ['p90']), sigma: numberValue(row, ['sigma']),
+    basis: value(row, ['basis']) as string | null, reasonCode: value(row, ['reason_code']) as string | null,
+  };
 }
 
 export function normalizeDemandProfile(row: Record<string, unknown>): DemandProfile {
