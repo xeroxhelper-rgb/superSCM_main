@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { BarChart3, Boxes, FileText, Gauge, LineChart, Settings2, ShieldCheck, ShoppingCart, Users } from 'lucide-react';
+import { BarChart3, Boxes, CalendarRange, FileText, Gauge, LineChart, Settings2, ShieldCheck, ShoppingCart, Users } from 'lucide-react';
 
 export type MenuRole = 'user' | 'admin';
 export type MenuStatus = 'ready' | 'locked';
@@ -30,6 +30,7 @@ export const menuByRole: Record<MenuRole, MenuItem[]> = {
     { href: '/admin', label: '관리자 현황', description: '기준·운영 상태', icon: ShieldCheck, section: 'ADMIN' },
     { href: '/admin/masters', label: '마스터 관리', description: '품목·공급처 기준', icon: Settings2, section: 'ADMIN', status: 'locked' },
     { href: '/admin/users', label: '사용자 관리', description: '계정과 권한 관리', icon: Users, section: 'ADMIN' },
+    { href: '/admin/forecast-settings', label: 'Forecast 설정', description: '학습·검증 기간 확인', icon: CalendarRange, section: 'ADMIN' },
   ],
 };
 

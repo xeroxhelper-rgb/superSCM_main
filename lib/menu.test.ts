@@ -36,3 +36,8 @@ test('ADMIN 메뉴에 사용자 관리가 있고 USER 메뉴에는 없다', () =
   assert.equal(menuModule.menuByRole.admin.some((item) => item.href === '/admin/users'), true);
   assert.equal(menuModule.menuByRole.user.some((item) => item.href.startsWith('/admin')), false);
 });
+
+test('ADMIN 메뉴에 Forecast 설정 검증 화면이 있고 USER 메뉴에는 없다', () => {
+  assert.equal(menuModule.menuByRole.admin.some((item) => item.href === '/admin/forecast-settings'), true);
+  assert.equal(menuModule.menuByRole.user.some((item) => item.href === '/admin/forecast-settings'), false);
+});

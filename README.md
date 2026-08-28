@@ -74,6 +74,22 @@ update core.app_user set role = 'ADMIN' where email = 'admin@example.com';
 
 권한 점검용 읽기 전용 SQL은 `sql/03-step2-verify.sql`입니다. `sql/01-grants.sql`, `sql/02-policies.sql`은 migration과 동기화된 보조 스크립트입니다. secret key나 service role key는 `.env.local` 또는 브라우저 코드에 넣지 않습니다.
 
+### STEP 3 학습·검증 데이터 설정
+
+`supabase/migrations/20260828000200_step3_data_isolation.sql`은 raw 입력 확장, 적재 추적 컬럼, 정책 테이블, Forecast 기간 설정과 train/test 격리 view를 생성합니다. Supabase SQL Editor에서는 migration 전체를 한 번에 실행하고, `sql/04-step3-verify.sql`로 객체와 권한을 확인합니다.
+
+Forecast 기간은 SQL/TypeScript 코드에 고정하지 않고 `core.forecast_setting`에 입력합니다.
+
+```sql
+update core.forecast_setting
+set train_start = 'YYYY-MM-DD', train_end = 'YYYY-MM-DD',
+    test_start = 'YYYY-MM-DD', test_end = 'YYYY-MM-DD',
+    granularity = 'DAY'
+where setting_id = 1;
+```
+
+`core.v_train_demand`는 학습 기간만, `core.v_test_actual`은 검증 기간만 반환합니다. `analytics.v_data_coverage`의 `train_window_ok`, `test_window_ok`, `windows_do_not_overlap`가 모두 true인지 확인한 뒤 Forecast와 Backtest를 연결합니다. 관리자에서는 `/admin/forecast-settings`에서 기간, 행 수, 정책 상태를 확인할 수 있습니다.
+
 ## 참고
 
 샘플 데이터가 제공되면 화면의 대표값을 실제 데이터 구조와 계산 기준에 맞춰 교체합니다.
