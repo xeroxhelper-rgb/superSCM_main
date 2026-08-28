@@ -175,4 +175,52 @@ select c.actual_start, c.actual_end, c.train_start, c.train_end, c.test_start, c
        (select count(*) from core.item_policy) as item_policy_count,
        (select count(*) from core.outlier_rule where enabled) as enabled_outlier_rule_count
 from analytics.v_data_coverage c
-join core.forecast_setting s on s.setting_id = 1;
+join core.forecast_setting s on s.setting_id = 1
+where core.is_admin();
+
+do $$
+declare table_name text;
+begin
+  foreach table_name in array array['shipment_log','supplier_master','item_master','inventory','usage_history','forecast','goods_receipt','purchase_order','business_event','sales_order','item_substitute'] loop
+    execute format('alter table if exists raw.%I enable row level security', table_name);
+  end loop;
+end $$;
+
+alter table core.policy_config enable row level security;
+alter table core.outlier_rule enable row level security;
+alter table core.item_policy enable row level security;
+alter table core.forecast_setting enable row level security;
+
+drop policy if exists policy_config_read_active on core.policy_config;
+create policy policy_config_read_active on core.policy_config for select to authenticated
+  using ((select coalesce((select active from core.app_user where user_id = auth.uid()), false)) or core.is_admin());
+drop policy if exists policy_config_admin_mutation on core.policy_config;
+create policy policy_config_admin_mutation on core.policy_config for all to authenticated
+  using (core.is_admin()) with check (core.is_admin());
+drop policy if exists outlier_rule_read_active on core.outlier_rule;
+create policy outlier_rule_read_active on core.outlier_rule for select to authenticated
+  using ((select coalesce((select active from core.app_user where user_id = auth.uid()), false)) or core.is_admin());
+drop policy if exists outlier_rule_admin_mutation on core.outlier_rule;
+create policy outlier_rule_admin_mutation on core.outlier_rule for all to authenticated
+  using (core.is_admin()) with check (core.is_admin());
+drop policy if exists item_policy_read_active on core.item_policy;
+create policy item_policy_read_active on core.item_policy for select to authenticated
+  using ((select coalesce((select active from core.app_user where user_id = auth.uid()), false)) or core.is_admin());
+drop policy if exists item_policy_admin_mutation on core.item_policy;
+create policy item_policy_admin_mutation on core.item_policy for all to authenticated
+  using (core.is_admin()) with check (core.is_admin());
+drop policy if exists forecast_setting_read_active on core.forecast_setting;
+create policy forecast_setting_read_active on core.forecast_setting for select to authenticated
+  using ((select coalesce((select active from core.app_user where user_id = auth.uid()), false)) or core.is_admin());
+drop policy if exists forecast_setting_admin_mutation on core.forecast_setting;
+create policy forecast_setting_admin_mutation on core.forecast_setting for all to authenticated
+  using (core.is_admin()) with check (core.is_admin());
+
+revoke all on schema raw from anon, authenticated;
+revoke all privileges on all tables in schema raw from anon, authenticated;
+grant usage on schema core, analytics to authenticated;
+grant select on core.v_train_demand, core.v_test_actual to authenticated;
+grant select on analytics.v_data_coverage to authenticated;
+grant select on analytics.v_forecast_setting_admin to authenticated;
+grant select on core.policy_config, core.outlier_rule, core.item_policy, core.forecast_setting to authenticated;
+alter default privileges in schema raw revoke all on tables from anon, authenticated;
