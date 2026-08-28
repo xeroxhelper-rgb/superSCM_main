@@ -1,16 +1,17 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { normalizeUploadBatchRow, toStagingInsertRows } from './repository-core.ts';
+import { normalizeUploadBatchRow, toStagingInsertRows, toUploadBatchInsert } from './repository-core.ts';
 import type { UploadBatchInput, ImportHistoryRow } from './repository-types.ts';
 import type { ImportType } from './types.ts';
 import type { MappedRow, ValidationSummary } from './types.ts';
 export { normalizeUploadBatchRow, toStagingInsertRows } from './repository-core.ts';
+export { toUploadBatchInsert } from './repository-core.ts';
 export type { UploadBatchInput, ImportHistoryRow } from './repository-types.ts';
 
 export async function createUploadBatch(input: UploadBatchInput) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('로그인이 필요합니다.');
-  const { data, error } = await supabase.schema('core').from('upload_batch').insert({ ...input, file_name: input.fileName, import_type: input.importType, import_mode: input.importMode, total_rows: input.totalRows, uploaded_by: user.id }).select().single();
+  const { data, error } = await supabase.schema('core').from('upload_batch').insert(toUploadBatchInsert(input, user.id)).select().single();
   if (error) throw error;
   return data;
 }
