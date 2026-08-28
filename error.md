@@ -243,3 +243,51 @@ where table_schema = 'analytics'
 ```
 
 결과에 두 뷰가 표시되면 STEP 8 파일 전체를 다시 실행합니다. 화면에 보이는 `Diagnose blocked queries` 패널은 현재 SQL 오류의 원인이 아니며 닫아도 됩니다.
+## 2026-08-28 — Vercel 배포 후 Routing Middleware 실행 실패
+
+### 오류
+
+Vercel 배포 사이트 접속 시 다음 오류 화면이 표시되었습니다.
+
+```text
+500: INTERNAL_SERVER_ERROR
+Code: MIDDLEWARE_INVOCATION_FAILED
+This Routing Middleware has crashed.
+```
+
+### 원인
+
+`middleware.ts`는 모든 보호 경로 요청에서 `lib/supabase/middleware.ts`를 실행합니다. 이 파일은 `NEXT_PUBLIC_SUPABASE_URL` 또는 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`가 없으면 `requireSupabaseEnv()`에서 의도적으로 예외를 발생시킵니다. 로컬 `.env.local` 값은 Git에 커밋되지 않으므로 Vercel 프로젝트 환경변수에는 자동으로 전달되지 않습니다.
+
+### 해결책
+
+Vercel 프로젝트의 `Settings → Environment Variables`에 아래 두 값을 추가합니다.
+
+```text
+NEXT_PUBLIC_SUPABASE_URL=https://<프로젝트-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+실제 배포 대상에 맞게 `Production`에 추가하고, Preview 배포도 확인하려면 `Preview`에도 추가합니다. 값을 저장한 뒤 `Redeploy`를 실행합니다. Supabase secret key(`sb_secret_...`)는 입력하지 않습니다.
+
+### 확인
+
+Vercel 재배포가 완료된 뒤 사이트에 다시 접속합니다. 환경변수 이름이 정확하고 값 앞뒤에 공백이나 따옴표가 없어야 합니다. 같은 오류가 계속되면 Vercel Runtime Logs에서 첫 번째 `MIDDLEWARE_INVOCATION_FAILED` 로그를 확인합니다.
+
+## 2026-08-28 — Vercel 빌드의 npm·Webpack 경고
+
+### 로그
+
+```text
+npm warn allow-scripts 1 package has install scripts not yet covered by allowScripts: sharp@0.34.5
+Compiled with warnings
+Skipped not serializable cache item ... styles/components.css
+```
+
+### 판단
+
+위 내용은 `npm run build`를 중단시키는 오류가 아니라 경고입니다. `sharp`의 설치 스크립트가 승인되지 않았다는 안내와 Webpack 캐시가 CSS 경고 객체를 직렬화하지 못해 해당 캐시 항목을 건너뛰었다는 의미입니다. 이 로그만으로 `MIDDLEWARE_INVOCATION_FAILED`의 원인이라고 볼 수 없습니다.
+
+### 해결책
+
+Vercel 빌드가 `Compiled successfully` 또는 최종 `Build completed`로 끝났다면 우선 조치하지 않아도 됩니다. `sharp` 최적화 기능이 실제로 실패하거나 빌드가 중단될 때만 프로젝트의 패키지 실행 스크립트 승인 설정을 검토합니다. 배포 후 500 오류가 계속되면 이 경고가 아니라 Vercel Runtime Logs의 middleware 상세 오류와 환경변수 설정을 먼저 확인합니다.

@@ -14,7 +14,10 @@ test('USER 메뉴는 원래 업무 흐름과 분석 그룹 순서를 유지한�
       ['WORKFLOW', '마스터 검증'],
       ['WORKFLOW', '발주량 계산'],
       ['WORKFLOW', '보고자료'],
-      ['ANALYSIS', '분석 화면'],
+      ['ANALYSIS', '리드타임 격차'],
+      ['ANALYSIS', '재고 소진 위험'],
+      ['ANALYSIS', 'SKU 수요 프로파일'],
+      ['ANALYSIS', 'Forecast 모델 비교'],
     ],
   );
 });
