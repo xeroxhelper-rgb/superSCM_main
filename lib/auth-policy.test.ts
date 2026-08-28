@@ -15,6 +15,18 @@ test('외부 URL과 로그인 순환 경로를 next로 허용하지 않는다', 
   assert.equal(safeNextPath('/analysis/leadtime?month=2026-09'), '/analysis/leadtime?month=2026-09');
 });
 
+test('로그인 경로의 slash 변형을 next로 허용하지 않는다', () => {
+  assert.equal(safeNextPath('/login/'), null);
+});
+
+test('로그인 경로의 fragment 변형을 next로 허용하지 않는다', () => {
+  assert.equal(safeNextPath('/login#fragment'), null);
+});
+
+test('백슬래시가 있는 next 경로를 허용하지 않는다', () => {
+  assert.equal(safeNextPath('/\\evil.example'), null);
+});
+
 test('DB 역할만 ADMIN 또는 USER로 정규화한다', () => {
   assert.equal(normalizeRole('ADMIN'), 'ADMIN');
   assert.equal(normalizeRole('USER'), 'USER');

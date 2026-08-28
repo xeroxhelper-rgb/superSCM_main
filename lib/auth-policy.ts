@@ -35,8 +35,13 @@ export function normalizeRole(value: unknown): AppRole | null {
 }
 
 export function safeNextPath(value: unknown): string | null {
-  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//')) return null;
-  if (value === '/login' || value.startsWith('/login?')) return null;
+  if (
+    typeof value !== 'string' ||
+    !value.startsWith('/') ||
+    value.startsWith('//') ||
+    value.includes('\\')
+  ) return null;
+  if (/^\/login(?:[/?#]|$)/.test(value)) return null;
   return value;
 }
 
