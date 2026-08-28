@@ -84,11 +84,19 @@ create policy usage_profile_read_active on core.usage_profile for select to auth
 drop policy if exists usage_profile_admin_mutation on core.usage_profile;
 create policy usage_profile_admin_mutation on core.usage_profile for all to authenticated using (core.is_admin()) with check (core.is_admin());
 
-do $$ declare table_name text; begin foreach table_name in array array['planning_runs','ol_demand','sfdc_pipeline','bulk_deals','historical_actuals','demand_confirmations'] loop execute format('alter table public.%I enable row level security', table_name); end loop; end $$;
 do $$ declare table_name text; begin
   foreach table_name in array array['planning_runs','ol_demand','sfdc_pipeline','bulk_deals','historical_actuals','demand_confirmations'] loop
-    execute format('drop policy if exists active_authenticated_read on public.%I', table_name);
-    execute format('create policy active_authenticated_read on public.%I for select to authenticated using ((select coalesce((select active from core.app_user where user_id = auth.uid()), false)))', table_name);
+    if to_regclass(format('public.%I', table_name)) is not null then
+      execute format('alter table public.%I enable row level security', table_name);
+    end if;
+  end loop;
+end $$;
+do $$ declare table_name text; begin
+  foreach table_name in array array['planning_runs','ol_demand','sfdc_pipeline','bulk_deals','historical_actuals','demand_confirmations'] loop
+    if to_regclass(format('public.%I', table_name)) is not null then
+      execute format('drop policy if exists active_authenticated_read on public.%I', table_name);
+      execute format('create policy active_authenticated_read on public.%I for select to authenticated using ((select coalesce((select active from core.app_user where user_id = auth.uid()), false)))', table_name);
+    end if;
   end loop;
 end $$;
 revoke all on schema core, analytics from anon;
