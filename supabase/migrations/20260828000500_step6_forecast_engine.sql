@@ -4,6 +4,12 @@
 create schema if not exists core;
 create schema if not exists analytics;
 
+alter table if exists core.forecast_setting add column if not exists forecast_horizon integer not null default 6;
+do $$ begin
+  alter table core.forecast_setting add constraint forecast_setting_horizon_check check (forecast_horizon >= 0);
+exception when duplicate_object then null;
+end $$;
+
 create table if not exists core.model_config (
   model_id text primary key,
   model_name text not null,
