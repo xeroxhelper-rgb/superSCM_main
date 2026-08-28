@@ -72,6 +72,16 @@ select b.batch_id, b.file_name, b.import_type, b.import_mode, b.total_rows,
 from core.upload_batch b
 left join auth.users u on u.id = b.uploaded_by;
 
+-- 현재 저장소에는 forecast run/snapshot 테이블이 없으므로 수요 import를
+-- 비파괴적인 stale 후보로 노출한다. snapshot 구조가 추가되면 비교 컬럼을 확장한다.
+create or replace view analytics.v_import_stale_candidates as
+select b.batch_id, b.import_type, b.imported_at,
+       true as stale_candidate,
+       'DEMAND_IMPORT_REQUIRES_FORECAST_REFRESH'::text as stale_reason
+from core.upload_batch b
+where b.status = 'IMPORTED'
+  and b.import_type in ('usage_history', 'sales_order', 'business_event');
+
 alter table core.upload_batch enable row level security;
 alter table core.import_staging enable row level security;
 alter table core.column_mapping enable row level security;
@@ -113,6 +123,7 @@ create policy validation_error_owner_insert on core.validation_error for insert 
 revoke all on core.upload_batch, core.import_staging, core.column_mapping, core.validation_error from anon;
 revoke all on analytics.v_import_history from anon;
 grant select on analytics.v_import_history to authenticated;
+grant select on analytics.v_import_stale_candidates to authenticated;
 create or replace function core.import_batch(target_batch_id uuid, confirmed boolean)
 returns jsonb
 language plpgsql
@@ -143,6 +154,18 @@ begin
   for s in select * from core.import_staging where batch_id = target_batch_id and validation_status in ('SUCCESS','WARNING') order by row_number loop
     payload := coalesce(s.mapped_data, '{}'::jsonb)
       || jsonb_build_object('batch_id', target_batch_id, 'source_type', 'FILE_UPLOAD', 'loaded_at', now(), 'source_record_id', coalesce(s.raw_data->>'source_record_id', target_batch_id::text || ':' || s.row_number::text));
+    if b.import_mode = 'upsert' then
+      case target_table
+        when 'usage_history' then execute 'delete from raw.usage_history where item_id = $1 and use_date = $2::date and coalesce(warehouse, '''') = coalesce($3, '''')' using payload->>'item_id', payload->>'use_date', payload->>'warehouse';
+        when 'inventory' then execute 'delete from raw.inventory where "품목코드" = $1 and coalesce("창고", '''') = coalesce($2, '''') and coalesce("기준일자", '''') = coalesce($3, '''')' using payload->>'품목코드', payload->>'창고', payload->>'기준일자';
+        when 'item_master' then execute 'delete from raw.item_master where "품목코드" = $1' using payload->>'품목코드';
+        when 'supplier_master' then execute 'delete from raw.supplier_master where "공급업체코드" = $1' using payload->>'공급업체코드';
+        when 'purchase_order' then execute 'delete from raw.purchase_order where "발주번호" = $1 and "품목코드" = $2' using payload->>'발주번호', payload->>'품목코드';
+        when 'goods_receipt' then execute 'delete from raw.goods_receipt where "입고번호" = $1' using payload->>'입고번호';
+        when 'sales_order' then execute 'delete from raw.sales_order where order_id = $1 and item_id = $2' using payload->>'order_id', payload->>'item_id';
+        when 'business_event' then execute 'delete from raw.business_event where event_type = $1 and event_date = $2::date and coalesce(item_id, '''') = coalesce($3, '''')' using payload->>'event_type', payload->>'event_date', payload->>'item_id';
+      end case;
+    end if;
     execute format('insert into raw.%I select (jsonb_populate_record(null::raw.%I, $1)).*', target_table, target_table) using payload;
     inserted_count := inserted_count + 1;
   end loop;

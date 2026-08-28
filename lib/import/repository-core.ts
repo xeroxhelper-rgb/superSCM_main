@@ -1,6 +1,11 @@
 import { getImportSchema } from './schema.ts';
 import type { ImportHistoryRow } from './repository-types.ts';
 import type { ImportType, MappedRow } from './types.ts';
+import type { UploadBatchInput } from './repository-types.ts';
+
+export function toUploadBatchInsert(input: UploadBatchInput, userId: string) {
+  return { file_name: input.fileName, import_type: input.importType, import_mode: input.importMode, total_rows: input.totalRows, uploaded_by: userId };
+}
 
 export function toStagingInsertRows(batchId: string, rows: MappedRow[], importType?: ImportType) {
   const fields = importType ? getImportSchema(importType).fields : [];

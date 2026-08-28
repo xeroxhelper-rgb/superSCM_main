@@ -90,6 +90,14 @@ where setting_id = 1;
 
 `core.v_train_demand`는 학습 기간만, `core.v_test_actual`은 검증 기간만 반환합니다. `analytics.v_data_coverage`의 `train_window_ok`, `test_window_ok`, `windows_do_not_overlap`가 모두 true인지 확인한 뒤 Forecast와 Backtest를 연결합니다. 관리자에서는 `/admin/forecast-settings`에서 기간, 행 수, 정책 상태를 확인할 수 있습니다.
 
+### STEP 4 파일 적재 pipeline
+
+`supabase/migrations/20260828000300_step4_import_pipeline.sql`을 STEP 2·3 이후 Supabase SQL Editor에서 전체 실행합니다. `core.upload_batch`, `core.import_staging`, `core.column_mapping`, `core.validation_error`와 `core.import_batch`, `core.rollback_batch` RPC, `analytics.v_import_history`, `analytics.v_import_stale_candidates`가 생성됩니다. 실행 후 `sql/05-step4-verify.sql`을 전체가 아닌 읽기 전용 검증용으로 실행하세요.
+
+관리자 화면 `/admin/data-management`에서 CSV/XLSX를 선택하고 데이터 종류와 append/upsert/replace 모드를 정한 뒤 Parse → Mapping → Validation → 사용자 확인 → Import 순서로 진행합니다. Validation ERROR가 있으면 Import할 수 없고, WARNING은 확인 표시 후 승인할 수 있습니다. replace와 rollback은 관리자 권한이 필요하며 replace는 완전 rollback을 지원하지 않습니다.
+
+파일은 서버에서만 파싱·검증되며, 사용자 확인 전에는 `raw`에 저장되지 않습니다. 승인된 행에는 `batch_id`, `source_type = 'FILE_UPLOAD'`, `loaded_at`, `source_record_id`가 기록됩니다. 수요 관련 batch가 적재되면 `analytics.v_import_stale_candidates`에서 Forecast 재계산 후보를 확인할 수 있습니다. 현재 저장소에는 기존 Forecast snapshot 테이블이 없어 snapshot 시점 비교는 후속 Forecast 구조에서 확장합니다.
+
 ## 참고
 
 샘플 데이터가 제공되면 화면의 대표값을 실제 데이터 구조와 계산 기준에 맞춰 교체합니다.

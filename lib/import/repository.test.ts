@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { toStagingInsertRows, normalizeUploadBatchRow } from './repository-core.ts';
+import { toStagingInsertRows, normalizeUploadBatchRow, toUploadBatchInsert } from './repository-core.ts';
 
 test('staging payload는 raw insert 없이 원본과 매핑 JSON을 보존한다', () => {
   const rows = toStagingInsertRows('batch-1', [
@@ -15,6 +15,12 @@ test('history row는 DB count와 사용자 정보를 화면 계약으로 정규�
   assert.equal(row.totalRows, 3);
   assert.equal(row.successRows, 2);
   assert.equal(row.uploader, '알 수 없음');
+});
+
+test('batch insert payload는 DB 컬럼명만 포함한다', () => {
+  assert.deepEqual(toUploadBatchInsert({ fileName: 'a.csv', importType: 'usage_history', importMode: 'append', totalRows: 2 }, 'user-1'), {
+    file_name: 'a.csv', import_type: 'usage_history', import_mode: 'append', total_rows: 2, uploaded_by: 'user-1',
+  });
 });
 
 test('repository는 raw 테이블에 직접 insert하지 않는다', async () => {

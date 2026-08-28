@@ -17,6 +17,8 @@ where routine_schema = 'core'
 
 select * from analytics.v_import_history order by uploaded_at desc;
 
+select * from analytics.v_import_stale_candidates order by imported_at desc;
+
 select batch_id, count(*) as error_count
 from core.validation_error
 group by batch_id
