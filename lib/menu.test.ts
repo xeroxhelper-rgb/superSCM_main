@@ -31,3 +31,8 @@ test('workflow query는 허용된 단계만 초기 단계로 변환한다', () =
   assert.equal(workflowStepFromParam?.(['supply']), 'dashboard');
   assert.equal(workflowStepFromParam?.(undefined), 'dashboard');
 });
+
+test('ADMIN 메뉴에 사용자 관리가 있고 USER 메뉴에는 없다', () => {
+  assert.equal(menuModule.menuByRole.admin.some((item) => item.href === '/admin/users'), true);
+  assert.equal(menuModule.menuByRole.user.some((item) => item.href.startsWith('/admin')), false);
+});

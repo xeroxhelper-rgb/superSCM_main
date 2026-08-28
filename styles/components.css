@@ -379,7 +379,11 @@
   }
 }
  .auth-form { display: grid; gap: var(--space-4); }
- .auth-field { display: grid; gap: var(--space-2); color: var(--text-secondary); font-size: 0.9rem; }
- .auth-field input { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.75rem; background: var(--surface); color: var(--text-primary); }
- .auth-error { color: var(--status-critical); }
+ .auth-field { display: grid; gap: var(--space-2); color: var(--color-on-surface-muted); font-size: 0.9rem; }
+ .auth-field input { width: 100%; border: 1px solid var(--color-outline-variant); border-radius: var(--radius-md); padding: 0.75rem; background: var(--color-surface); color: var(--color-on-surface); }
+ .auth-error { color: var(--color-danger); }
  .topbar-user { display: inline-flex; align-items: center; gap: var(--space-2); }
+ .admin-control { display: inline-flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+ .admin-control select { border: 1px solid var(--color-outline-variant); border-radius: var(--radius-sm); padding: var(--space-2); background: var(--color-surface); color: var(--color-on-surface); }
+ .admin-control small { color: var(--color-outline); font-size: 10px; }
+ .admin-notice { color: var(--color-success); font-size: 12px; }
