@@ -160,3 +160,50 @@ where setting_id = 1;
 ```
 
 실제 보유 데이터가 해당 기간을 모두 포함하는지는 `analytics.v_data_coverage`에서 `train_window_ok`, `test_window_ok`로 확인합니다.
+
+## 2026-08-28 — STEP 8 Python Forecast migration의 선행 테이블 누락
+
+### 오류
+
+Supabase SQL Editor에서 `20260828000700_step8_python_forecast.sql` 실행 시 다음 오류가 발생했습니다.
+
+```text
+ERROR: 42P01: relation "core.model_config" does not exist
+```
+
+### 원인
+
+`core.model_config`는 STEP 6 migration인 `20260828000500_step6_forecast_engine.sql`에서 생성됩니다. STEP 8 migration은 이 테이블의 `engine` 제약조건을 확장하고 Python 모델을 등록하므로, STEP 6이 적용되지 않은 프로젝트에서는 해당 구문에서 중단됩니다.
+
+### 해결책
+
+먼저 아래 순서로 선행 migration을 전체 실행합니다.
+
+```text
+20260828000500_step6_forecast_engine.sql
+20260828000600_step7_backtest_champion.sql
+20260828000700_step8_python_forecast.sql
+```
+
+각 파일은 SQL Editor에서 기존 쿼리를 비운 새 query에 전체 붙여넣고 `Run`으로 실행합니다. 아래 확인 쿼리로 STEP 6 테이블이 존재하는지 먼저 확인할 수 있습니다.
+
+```sql
+select table_schema, table_name
+from information_schema.tables
+where table_schema = 'core'
+  and table_name in ('model_config', 'model_version', 'forecast_run', 'forecast_result')
+order by table_name;
+```
+
+STEP 8만 먼저 실행해서 실패한 경우, 선행 migration을 적용한 뒤 STEP 8 파일 전체를 다시 실행합니다. `create table if not exists`와 `on conflict` 구문이 있어 이미 생성된 STEP 6·7 객체는 유지됩니다.
+
+### 검증
+
+확인 쿼리 결과에 `model_config`, `model_version`, `forecast_run`, `forecast_result`가 각각 표시되고, 이후 STEP 8 실행 후 다음 쿼리에서 Python 모델이 표시되는지 확인합니다.
+
+```sql
+select model_id, engine, enabled
+from core.model_config
+where engine = 'PYTHON'
+order by model_id;
+```
