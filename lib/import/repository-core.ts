@@ -1,5 +1,6 @@
 import { getImportSchema } from './schema.ts';
-import type { ImportHistoryRow, ImportType, MappedRow } from './repository-types';
+import type { ImportHistoryRow } from './repository-types.ts';
+import type { ImportType, MappedRow } from './types.ts';
 
 export function toStagingInsertRows(batchId: string, rows: MappedRow[], importType?: ImportType) {
   const fields = importType ? getImportSchema(importType).fields : [];

@@ -31,6 +31,31 @@ export async function saveValidationResult(batchId: string, summary: ValidationS
   if (error) throw error;
 }
 
+export async function getUploadBatch(batchId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.schema('core').from('upload_batch').select('*').eq('batch_id', batchId).single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getStagingRows(batchId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.schema('core').from('import_staging').select('staging_id, batch_id, row_number, raw_data, mapped_data, validation_status').eq('batch_id', batchId).order('row_number');
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function saveMappedValidationResult(batchId: string, importType: ImportType, rows: MappedRow[], summary: ValidationSummary): Promise<void> {
+  const supabase = await createSupabaseServerClient();
+  const stagingRows = toStagingInsertRows(batchId, rows, importType);
+  for (const row of stagingRows) {
+    const status = summary.rows.find((candidate) => candidate.rowNumber === row.row_number)?.status ?? 'ERROR';
+    const { error } = await supabase.schema('core').from('import_staging').update({ mapped_data: row.mapped_data, validation_status: status }).eq('batch_id', batchId).eq('row_number', row.row_number);
+    if (error) throw error;
+  }
+  await saveValidationResult(batchId, summary);
+}
+
 export async function getImportHistory(): Promise<ImportHistoryRow[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.schema('analytics').from('v_import_history').select('*').order('uploaded_at', { ascending: false });

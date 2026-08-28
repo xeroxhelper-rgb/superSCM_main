@@ -7,7 +7,7 @@ function escapeCsv(value: unknown): string {
 
 export function buildValidationErrorCsv(rows: MappedRow[], issues: ValidationIssue[]): string {
   const errorIssues = issues.filter((issue) => issue.severity === 'ERROR' || issue.severity === 'WARNING');
-  const columns = [...new Set(rows.flatMap((row) => Object.keys(row.source)))];
+  const columns = Array.from(new Set(rows.flatMap((row) => Object.keys(row.source))));
   const headers = [...columns, 'row_number', 'error_code', 'error_message', 'severity'];
   const lines = [headers.map(escapeCsv).join(',')];
   for (const issue of errorIssues) {

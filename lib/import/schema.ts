@@ -7,7 +7,7 @@ const commonTrackingFields: ImportField[] = [
   { name: 'source_record_id', dbColumn: 'source_record_id', kind: 'text', aliases: [] },
 ];
 
-const schemas: Record<ImportType, ImportSchema> = {
+const schemas: Record<ImportType, Omit<ImportSchema, 'requiredFields'>> = {
   usage_history: {
     importType: 'usage_history', targetTable: 'usage_history',
     fields: [
