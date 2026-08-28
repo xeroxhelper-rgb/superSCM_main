@@ -62,6 +62,18 @@ supabase db push
 
 마이그레이션 파일은 `supabase/migrations/`에 있으며, 현재 수요확정 기능에 필요한 `planning_runs`, `ol_demand`, `sfdc_pipeline`, `bulk_deals`, `historical_actuals`, `demand_confirmations` 테이블을 생성합니다. 원격 데이터베이스는 Dashboard에서 직접 수정하지 않고 마이그레이션 파일로 관리합니다.
 
+### STEP 2 인증·권한 설정
+
+`supabase/migrations/20260828000100_step2_auth_rbac.sql`을 배포하면 `core.app_user`, `core.audit_log`, 신규 사용자 trigger, 관리자 RPC, RLS가 함께 생성됩니다. 최초 관리자 계정은 사용자 회원가입 후 SQL Editor에서 한 번 지정합니다.
+
+```sql
+update core.app_user set role = 'ADMIN' where email = 'admin@example.com';
+```
+
+`core`와 `analytics`를 Supabase API의 Exposed schemas에 추가하고, 테스트용 ADMIN/USER 계정을 각각 준비하세요. USER는 `/admin/*`에 접근할 수 없고, 사용자 변경은 관리자 Server Action과 DB RPC 양쪽에서 검증됩니다. 역할·활성 상태 변경은 `core.audit_log`에 자동 기록됩니다.
+
+권한 점검용 읽기 전용 SQL은 `sql/03-step2-verify.sql`입니다. `sql/01-grants.sql`, `sql/02-policies.sql`은 migration과 동기화된 보조 스크립트입니다. secret key나 service role key는 `.env.local` 또는 브라우저 코드에 넣지 않습니다.
+
 ## 참고
 
 샘플 데이터가 제공되면 화면의 대표값을 실제 데이터 구조와 계산 기준에 맞춰 교체합니다.
