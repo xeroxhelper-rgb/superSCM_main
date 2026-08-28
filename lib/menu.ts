@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { BarChart3, Boxes, CalendarRange, FileText, FileUp, Gauge, LineChart, Settings2, ShieldCheck, ShoppingCart, Users } from 'lucide-react';
+import { BarChart3, Boxes, CalendarRange, FileText, FileUp, Gauge, LineChart, Settings2, ShieldCheck, ShoppingCart, Users, WandSparkles, History } from 'lucide-react';
 
 export type MenuRole = 'user' | 'admin';
 export type MenuStatus = 'ready' | 'locked';
@@ -32,6 +32,8 @@ export const menuByRole: Record<MenuRole, MenuItem[]> = {
     { href: '/admin/users', label: '사용자 관리', description: '계정과 권한 관리', icon: Users, section: 'ADMIN' },
     { href: '/admin/forecast-settings', label: 'Forecast 설정', description: '학습·검증 기간 확인', icon: CalendarRange, section: 'ADMIN' },
     { href: '/admin/data-management', label: 'Data Management', description: '파일 적재와 검증 이력', icon: FileUp, section: 'ADMIN' },
+    { href: '/admin/forecast-models', label: 'Forecast 모델', description: 'Baseline 모델 설정', icon: WandSparkles, section: 'ADMIN' },
+    { href: '/admin/forecast-runs', label: 'Forecast 실행 이력', description: '실행 결과와 stale 상태', icon: History, section: 'ADMIN' },
   ],
 };
 
