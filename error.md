@@ -102,3 +102,61 @@ LINE 174: ) order by p.policy_key from core.policy_config p where p.active)
 ### 검증
 
 로컬 회귀 테스트와 전체 테스트, TypeScript 검사, production build를 다시 실행합니다. Supabase에서 migration을 재실행한 뒤 `analytics.v_forecast_setting_admin` view가 생성되는지 확인합니다.
+
+## 2026-08-28 — 수정 전 STEP 3 migration 재실행으로 동일 문법 오류 반복
+
+### 오류
+
+Supabase SQL Editor에서 다음과 같은 오류가 다시 발생했습니다.
+
+```text
+ERROR: 42601: syntax error at or near "from"
+LINE 175: ) order by p.policy_key from core.policy_config p where p.active)
+```
+
+### 원인
+
+오류 메시지의 `) order by p.policy_key from` 형태는 수정 전 migration에 남아 있는 구문입니다. 최신 파일은 `order by p.policy_key` 다음에 `jsonb_agg`를 닫도록 수정되어 있으므로, SQL Editor에 이전 내용이 남아 있거나 수정 전 파일을 다시 실행한 상황입니다.
+
+### 해결책
+
+SQL Editor의 기존 쿼리를 모두 삭제하고 최신 `20260828000200_step3_data_isolation.sql` 전체를 새 쿼리에 붙여넣습니다. 아래 형태가 포함되어 있어야 합니다.
+
+```sql
+jsonb_agg(
+  jsonb_build_object(...)
+  order by p.policy_key
+) from core.policy_config p where p.active
+```
+
+`Run selected`가 아니라 전체 쿼리를 실행합니다.
+
+## 2026-08-28 — Forecast 기간 설정의 학습·검증 기간 중복 오류
+
+### 오류
+
+기간 설정 SQL 실행 시 다음 오류가 발생했습니다.
+
+```text
+ERROR: 23514: new row for relation "forecast_setting" violates check constraint "forecast_setting_check2"
+```
+
+### 원인
+
+입력한 기간은 학습 기간이 `2026-08-20`부터 `2026-08-26`까지이고, 검증 기간이 `2026-08-23`부터 `2026-08-27`까지라 서로 겹칩니다. STEP 3은 검증 데이터가 학습에 섞이는 것을 막기 위해 `test_start > train_end` 조건을 적용합니다.
+
+### 해결책
+
+검증 시작일을 학습 종료일 다음 날 이후로 변경합니다. 예를 들어 아래처럼 실행합니다.
+
+```sql
+update core.forecast_setting
+set train_start = '2026-08-20',
+    train_end = '2026-08-26',
+    test_start = '2026-08-27',
+    test_end = '2026-08-27',
+    granularity = 'DAY'
+where setting_id = 1;
+```
+
+실제 보유 데이터가 해당 기간을 모두 포함하는지는 `analytics.v_data_coverage`에서 `train_window_ok`, `test_window_ok`로 확인합니다.
