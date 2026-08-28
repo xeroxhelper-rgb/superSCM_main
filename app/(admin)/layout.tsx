@@ -3,6 +3,8 @@ import Sidebar from '@/components/shell/sidebar';
 import Topbar from '@/components/shell/topbar';
 import { requireAdmin } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const profile = await requireAdmin();
   return <div className="design-app-shell"><Sidebar role="admin" /><div className="design-main"><Topbar eyebrow="SCM ADMIN CONTROL" title="관리자 콘솔" profile={profile} /><main className="design-content">{children}</main></div></div>;
