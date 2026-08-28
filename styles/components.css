@@ -412,3 +412,112 @@
 .detail-list dt { color: var(--color-on-surface-muted); }
 .detail-list dd { margin: 0; text-align: right; }
 .detail-list p { grid-column: 1 / -1; color: var(--color-on-surface-muted); }
+
+/* 새 다크 셸 안에 표시되는 레거시 Workflow 화면의 공통 다크 테마 */
+.design-content .workflow-screen {
+  color: var(--color-on-surface);
+}
+
+.design-content .workflow-screen .card {
+  background: var(--color-surface);
+  border-color: var(--color-outline-variant);
+  box-shadow: none;
+  color: var(--color-on-surface);
+}
+
+.design-content .workflow-screen .page-heading h2,
+.design-content .workflow-screen .card-title h3,
+.design-content .workflow-screen .section-heading h3,
+.design-content .workflow-screen .metric-value,
+.design-content .workflow-screen .check-label,
+.design-content .workflow-screen .meeting-result b {
+  color: var(--color-on-surface);
+}
+
+.design-content .workflow-screen .page-heading p,
+.design-content .workflow-screen .card-title span,
+.design-content .workflow-screen .metric-label,
+.design-content .workflow-screen .metric-foot,
+.design-content .workflow-screen .muted,
+.design-content .workflow-screen .section-heading span,
+.design-content .workflow-screen .sample-input span,
+.design-content .workflow-screen .table-wrap td,
+.design-content .workflow-screen .meeting-result {
+  color: var(--color-on-surface-muted);
+}
+
+.design-content .workflow-screen .table-wrap,
+.design-content .workflow-screen .report-preview,
+.design-content .workflow-screen .sample-input {
+  background: var(--color-surface-high);
+  border-color: var(--color-outline-variant);
+  color: var(--color-on-surface);
+}
+
+.design-content .workflow-screen .table-wrap th {
+  background: var(--color-surface-highest);
+  color: var(--color-on-surface-muted);
+}
+
+.design-content .workflow-screen .table-wrap td {
+  border-color: var(--color-outline-variant);
+}
+
+.design-content .workflow-screen .callout,
+.design-content .workflow-screen .meeting-result {
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border-color: var(--color-outline-variant);
+}
+
+.design-content .workflow-screen .callout.blue {
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  color: var(--color-primary);
+}
+
+.design-content .workflow-screen .demand-toolbar,
+.design-content .workflow-screen .demand-actions {
+  background: var(--color-surface);
+  border-color: var(--color-outline-variant);
+  color: var(--color-on-surface);
+}
+
+.design-content .workflow-screen .demand-tabs {
+  border-color: var(--color-outline-variant);
+}
+
+.design-content .workflow-screen .demand-tab {
+  color: var(--color-on-surface-muted);
+}
+
+.design-content .workflow-screen .demand-tab.active {
+  color: var(--color-primary);
+}
+
+.design-content .workflow-screen .toolbar-group select,
+.design-content .workflow-screen .table-select,
+.design-content .workflow-screen .form-input,
+.design-content .workflow-screen .table-input {
+  border-color: var(--color-outline-variant);
+  background: var(--color-surface-high);
+  color: var(--color-on-surface);
+}
+
+.design-content .workflow-screen .button {
+  background: var(--color-surface-high);
+  border-color: var(--color-outline-variant);
+  color: var(--color-on-surface);
+}
+
+.design-content .workflow-screen .button.primary {
+  background: var(--color-primary-container);
+  border-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+
+.design-content .workflow-screen .report-line {
+  background: var(--color-outline-variant);
+}
+
+.design-content .workflow-screen .report-line.blue {
+  background: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
