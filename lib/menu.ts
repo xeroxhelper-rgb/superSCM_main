@@ -38,6 +38,7 @@ export const menuByRole: Record<MenuRole, MenuItem[]> = {
 export const analysisMenuItems = [
   { href: '/analysis/leadtime', label: '리드타임 격차' },
   { href: '/analysis/stockout', label: '재고 소진 위험' },
+  { href: '/analysis/demand-profile', label: 'SKU 수요 프로파일' },
 ] as const;
 
 const workflowSteps: WorkflowStep[] = ['dashboard', 'demand', 'supply', 'master', 'calculation', 'report'];
