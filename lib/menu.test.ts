@@ -41,3 +41,8 @@ test('ADMIN 메뉴에 Forecast 설정 검증 화면이 있고 USER 메뉴에는 
   assert.equal(menuModule.menuByRole.admin.some((item) => item.href === '/admin/forecast-settings'), true);
   assert.equal(menuModule.menuByRole.user.some((item) => item.href === '/admin/forecast-settings'), false);
 });
+
+test('ADMIN 메뉴에 Data Management가 있고 USER 메뉴에는 없다', () => {
+  assert.equal(menuModule.menuByRole.admin.some((item) => item.href === '/admin/data-management'), true);
+  assert.equal(menuModule.menuByRole.user.some((item) => item.href === '/admin/data-management'), false);
+});
