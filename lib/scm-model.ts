@@ -113,6 +113,84 @@ export type ForecastResult = {
   reasonCode: string | null;
 };
 
+export type BacktestRun = {
+  backtestRunId: string;
+  forecastRunId: string;
+  testStart: string | null;
+  testEnd: string | null;
+  metric: string;
+  status: 'RUNNING' | 'SUCCESS' | 'FAILED';
+  startedAt: string | null;
+  finishedAt: string | null;
+  triggeredBy: string | null;
+  message: string | null;
+};
+
+export type ModelPerformance = {
+  performanceId: string;
+  backtestRunId: string;
+  runId: string;
+  modelId: string;
+  modelVersion: string | null;
+  itemId: string;
+  nPeriods: number | null;
+  nComparedPeriods: number | null;
+  wape: number | null;
+  mape: number | null;
+  bias: number | null;
+  rmse: number | null;
+  mae: number | null;
+  baselineImprovement: number | null;
+  rank: number | null;
+  metricValue: number | null;
+  calculationStatus: string;
+  reasonCode: string | null;
+};
+
+export type ChampionModel = {
+  championId: string;
+  itemId: string;
+  backtestRunId: string | null;
+  forecastRunId: string | null;
+  championModelId: string;
+  modelVersion: string | null;
+  championMetric: string;
+  championMetricValue: number | null;
+  wape: number | null;
+  mape: number | null;
+  bias: number | null;
+  rmse: number | null;
+  mae: number | null;
+  candidatePerformance: Record<string, unknown>[];
+  selectionReason: string | null;
+  selectionMethod: 'AUTO' | 'MANUAL';
+  selectedAt: string | null;
+};
+
+export type ComparisonPoint = {
+  runId: string;
+  backtestRunId: string | null;
+  modelId: string;
+  modelName: string;
+  itemId: string;
+  period: string;
+  modelVersion: string | null;
+  predictedQty: number | null;
+  p50: number | null;
+  p80: number | null;
+  p90: number | null;
+  actualQty: number | null;
+  wape: number | null;
+  mape: number | null;
+  bias: number | null;
+  rmse: number | null;
+  mae: number | null;
+  rank: number | null;
+  calculationStatus: string | null;
+  reasonCode: string | null;
+  isChampion: boolean;
+};
+
 function value(row: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     if (row[key] !== undefined && row[key] !== null && row[key] !== '') return row[key];
@@ -177,6 +255,25 @@ export function normalizeForecastResult(row: Record<string, unknown>): ForecastR
     predictedQty: numberValue(row, ['predicted_qty']), p50: numberValue(row, ['p50']), p80: numberValue(row, ['p80']), p90: numberValue(row, ['p90']), sigma: numberValue(row, ['sigma']),
     basis: value(row, ['basis']) as string | null, reasonCode: value(row, ['reason_code']) as string | null,
   };
+}
+
+export function normalizeBacktestRun(row: Record<string, unknown>): BacktestRun {
+  const status = value(row, ['status']);
+  return { backtestRunId: String(value(row, ['backtest_run_id']) ?? '미정'), forecastRunId: String(value(row, ['forecast_run_id']) ?? '미정'), testStart: value(row, ['test_start']) as string | null, testEnd: value(row, ['test_end']) as string | null, metric: String(value(row, ['metric']) ?? '미정'), status: status === 'RUNNING' || status === 'SUCCESS' || status === 'FAILED' ? status : 'FAILED', startedAt: value(row, ['started_at']) as string | null, finishedAt: value(row, ['finished_at']) as string | null, triggeredBy: value(row, ['triggered_by']) as string | null, message: value(row, ['message']) as string | null };
+}
+
+export function normalizeModelPerformance(row: Record<string, unknown>): ModelPerformance {
+  return { performanceId: String(value(row, ['performance_id']) ?? '미정'), backtestRunId: String(value(row, ['backtest_run_id']) ?? '미정'), runId: String(value(row, ['run_id']) ?? '미정'), modelId: String(value(row, ['model_id']) ?? '미정'), modelVersion: value(row, ['model_version']) as string | null, itemId: String(value(row, ['item_id']) ?? '미정'), nPeriods: numberValue(row, ['n_periods']), nComparedPeriods: numberValue(row, ['n_compared_periods']), wape: numberValue(row, ['wape']), mape: numberValue(row, ['mape']), bias: numberValue(row, ['bias']), rmse: numberValue(row, ['rmse']), mae: numberValue(row, ['mae']), baselineImprovement: numberValue(row, ['baseline_improvement']), rank: numberValue(row, ['rank']), metricValue: numberValue(row, ['metric_value']), calculationStatus: String(value(row, ['calculation_status']) ?? 'UNAVAILABLE'), reasonCode: value(row, ['reason_code']) as string | null };
+}
+
+export function normalizeChampionModel(row: Record<string, unknown>): ChampionModel {
+  const method = value(row, ['selection_method']);
+  const candidates = value(row, ['candidate_performance']);
+  return { championId: String(value(row, ['champion_id']) ?? '미정'), itemId: String(value(row, ['item_id']) ?? '미정'), backtestRunId: value(row, ['backtest_run_id']) as string | null, forecastRunId: value(row, ['forecast_run_id']) as string | null, championModelId: String(value(row, ['champion_model_id']) ?? '미정'), modelVersion: value(row, ['model_version']) as string | null, championMetric: String(value(row, ['champion_metric']) ?? '미정'), championMetricValue: numberValue(row, ['champion_metric_value']), wape: numberValue(row, ['wape']), mape: numberValue(row, ['mape']), bias: numberValue(row, ['bias']), rmse: numberValue(row, ['rmse']), mae: numberValue(row, ['mae']), candidatePerformance: Array.isArray(candidates) ? candidates as Record<string, unknown>[] : [], selectionReason: value(row, ['selection_reason']) as string | null, selectionMethod: method === 'MANUAL' ? 'MANUAL' : 'AUTO', selectedAt: value(row, ['selected_at']) as string | null };
+}
+
+export function normalizeComparisonPoint(row: Record<string, unknown>): ComparisonPoint {
+  return { runId: String(value(row, ['run_id']) ?? '미정'), backtestRunId: value(row, ['backtest_run_id']) as string | null, modelId: String(value(row, ['model_id']) ?? '미정'), modelName: String(value(row, ['model_name']) ?? value(row, ['model_id']) ?? '미정'), itemId: String(value(row, ['item_id']) ?? '미정'), period: String(value(row, ['period']) ?? '미정'), modelVersion: value(row, ['model_version']) as string | null, predictedQty: numberValue(row, ['predicted_qty']), p50: numberValue(row, ['p50']), p80: numberValue(row, ['p80']), p90: numberValue(row, ['p90']), actualQty: numberValue(row, ['actual_qty']), wape: numberValue(row, ['wape']), mape: numberValue(row, ['mape']), bias: numberValue(row, ['bias']), rmse: numberValue(row, ['rmse']), mae: numberValue(row, ['mae']), rank: numberValue(row, ['rank']), calculationStatus: value(row, ['calculation_status']) as string | null, reasonCode: value(row, ['reason_code']) as string | null, isChampion: booleanValue(row, ['is_champion']) ?? false };
 }
 
 export function normalizeDemandProfile(row: Record<string, unknown>): DemandProfile {

@@ -34,6 +34,8 @@ export const menuByRole: Record<MenuRole, MenuItem[]> = {
     { href: '/admin/data-management', label: 'Data Management', description: '파일 적재와 검증 이력', icon: FileUp, section: 'ADMIN' },
     { href: '/admin/forecast-models', label: 'Forecast 모델', description: 'Baseline 모델 설정', icon: WandSparkles, section: 'ADMIN' },
     { href: '/admin/forecast-runs', label: 'Forecast 실행 이력', description: '실행 결과와 stale 상태', icon: History, section: 'ADMIN' },
+    { href: '/admin/backtest-runs', label: 'Backtest 실행', description: '검증 성능 계산 실행', icon: History, section: 'ADMIN' },
+    { href: '/admin/champions', label: 'Champion 관리', description: '모델 선정과 변경 이력', icon: WandSparkles, section: 'ADMIN' },
   ],
 };
 
@@ -41,6 +43,7 @@ export const analysisMenuItems = [
   { href: '/analysis/leadtime', label: '리드타임 격차' },
   { href: '/analysis/stockout', label: '재고 소진 위험' },
   { href: '/analysis/demand-profile', label: 'SKU 수요 프로파일' },
+  { href: '/analysis/model-comparison', label: 'Forecast 모델 비교' },
 ] as const;
 
 const workflowSteps: WorkflowStep[] = ['dashboard', 'demand', 'supply', 'master', 'calculation', 'report'];

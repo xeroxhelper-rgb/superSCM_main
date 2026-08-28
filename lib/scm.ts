@@ -1,5 +1,21 @@
 import { createSupabaseServerClient } from './supabase';
-import { normalizeDemandProfile, normalizeDemandProfileKpi, normalizeForecastModel, normalizeForecastResult, normalizeForecastRun, normalizeLeadtimeGap, normalizeStockoutKpi, normalizeStockoutRisk, type DemandProfile, type DemandProfileKpi, type ForecastModel, type ForecastResult, type ForecastRun, type LeadtimeGap, type StockoutKpi, type StockoutRisk } from './scm-model';
+import { normalizeBacktestRun, normalizeChampionModel, normalizeComparisonPoint, normalizeDemandProfile, normalizeDemandProfileKpi, normalizeForecastModel, normalizeForecastResult, normalizeForecastRun, normalizeLeadtimeGap, normalizeModelPerformance, normalizeStockoutKpi, normalizeStockoutRisk, type BacktestRun, type ChampionModel, type ComparisonPoint, type DemandProfile, type DemandProfileKpi, type ForecastModel, type ForecastResult, type ForecastRun, type LeadtimeGap, type ModelPerformance, type StockoutKpi, type StockoutRisk } from './scm-model';
+
+async function analyticsRows<T>(view: string, normalize: (row: Record<string, unknown>) => T, apply?: (query: any) => any): Promise<{ rows: T[]; error: string | null }> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    let query = supabase.schema('analytics').from(view).select('*');
+    if (apply) query = apply(query);
+    const { data, error } = await query;
+    if (error) return { rows: [], error: error.message };
+    return { rows: (data ?? []).map((row: Record<string, unknown>) => normalize(row)), error: null };
+  } catch (error) { return { rows: [], error: error instanceof Error ? error.message : 'Supabase 조회에 실패했습니다.' }; }
+}
+
+export function getBacktestRuns() { return analyticsRows('v_backtest_run', normalizeBacktestRun, (q) => q.order('started_at', { ascending: false })); }
+export function getModelPerformance(filters?: { itemId?: string; backtestRunId?: string }) { return analyticsRows('v_model_performance', normalizeModelPerformance, (q) => { let next = q.order('item_id').order('rank'); if (filters?.itemId) next = next.eq('item_id', filters.itemId); if (filters?.backtestRunId) next = next.eq('backtest_run_id', filters.backtestRunId); return next; }); }
+export function getChampions() { return analyticsRows('v_champion_model', normalizeChampionModel, (q) => q.order('item_id')); }
+export function getModelComparison(filters?: { itemId?: string; runId?: string; modelId?: string; from?: string; to?: string }) { return analyticsRows('v_model_comparison', normalizeComparisonPoint, (q) => { let next = q.order('period'); if (filters?.itemId) next = next.eq('item_id', filters.itemId); if (filters?.runId) next = next.eq('run_id', filters.runId); if (filters?.modelId) next = next.eq('model_id', filters.modelId); if (filters?.from) next = next.gte('period', filters.from); if (filters?.to) next = next.lte('period', filters.to); return next; }); }
 
 export async function getForecastModels(): Promise<{ rows: ForecastModel[]; error: string | null }> {
   try { const supabase = await createSupabaseServerClient(); const { data, error } = await supabase.schema('analytics').from('v_model_config').select('*').order('model_id'); if (error) return { rows: [], error: error.message }; return { rows: (data ?? []).map((row) => normalizeForecastModel(row as Record<string, unknown>)), error: null }; }
