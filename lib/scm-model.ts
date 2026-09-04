@@ -34,6 +34,57 @@ export type StockoutKpi = {
   avgStockoutDays: number | null;
 };
 
+export type ShipmentTrend = {
+  itemCode: string;
+  itemName: string | null;
+  period: string | null;
+  shipmentCount: number | null;
+  shippedQty: number | null;
+  averageQty: number | null;
+  trend: number | null;
+  reasonCode: string | null;
+};
+
+export type DemandProfileRt = {
+  itemCode: string;
+  itemName: string | null;
+  demandType: string | null;
+  adi: number | null;
+  cvSquared: number | null;
+  zeroDemandRate: number | null;
+  trend: number | null;
+  recentChangeRate: number | null;
+  stability: string | null;
+  reasonCode: string | null;
+};
+
+export type OlAccuracy = {
+  modelBase: string | null;
+  fiscalYear: string | null;
+  period: string | null;
+  nItems: number | null;
+  actualQty: number | null;
+  forecastQty: number | null;
+  wape: number | null;
+  mape: number | null;
+  bias: number | null;
+  rmse: number | null;
+  mae: number | null;
+  reasonCode: string | null;
+};
+
+export type BomRequirement = {
+  modelBase: string | null;
+  itemCode: string;
+  itemName: string | null;
+  componentItemCode: string | null;
+  componentItemName: string | null;
+  requiredQty: number | null;
+  bomQty: number | null;
+  linkageStatus: string | null;
+  reasonCode: string | null;
+};
+
 function value(row: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     if (row[key] !== undefined && row[key] !== null && row[key] !== '') return row[key];
@@ -94,5 +145,65 @@ export function normalizeStockoutKpi(row: Record<string, unknown>): StockoutKpi 
     nUnknown: numberValue(row, ['n_unknown', 'unknown_count']),
     nWithin30d: numberValue(row, ['n_within_30d', 'within_30d']),
     avgStockoutDays: numberValue(row, ['avg_stockout_days', 'average_stockout_days']),
+  };
+}
+
+export function normalizeShipmentTrend(row: Record<string, unknown>): ShipmentTrend {
+  return {
+    itemCode: String(value(row, ['item_code', 'item_id', 'sku', '품목코드']) ?? '미정'),
+    itemName: value(row, ['item_name', '품목명']) === null ? null : String(value(row, ['item_name', '품목명'])),
+    period: value(row, ['period', 'month', 'shipment_month', '월']) === null ? null : String(value(row, ['period', 'month', 'shipment_month', '월'])),
+    shipmentCount: numberValue(row, ['shipment_count', 'n_shipments', 'shipment_cnt', '출하건수']),
+    shippedQty: numberValue(row, ['shipped_qty', 'shipment_qty', 'total_qty', '출하수량']),
+    averageQty: numberValue(row, ['average_qty', 'avg_qty', 'mean_qty', '평균출하량']),
+    trend: numberValue(row, ['trend', 'trend_per_period', 'slope', '추세']),
+    reasonCode: value(row, ['reason_code', 'reason', '사유코드']) === null ? null : String(value(row, ['reason_code', 'reason', '사유코드'])),
+  };
+}
+
+export function normalizeDemandProfileRt(row: Record<string, unknown>): DemandProfileRt {
+  const demandType = value(row, ['demand_type', 'demand_class', 'pattern_type', '수요유형']);
+  return {
+    itemCode: String(value(row, ['item_code', 'item_id', 'sku', '품목코드']) ?? '미정'),
+    itemName: value(row, ['item_name', '품목명']) === null ? null : String(value(row, ['item_name', '품목명'])),
+    demandType: demandType === null ? null : String(demandType).toUpperCase(),
+    adi: numberValue(row, ['adi', 'average_demand_interval']),
+    cvSquared: numberValue(row, ['cv_squared', 'cv2', 'cv_sq', 'CV2']),
+    zeroDemandRate: numberValue(row, ['zero_demand_rate', 'zero_rate', '무수요비율']),
+    trend: numberValue(row, ['trend', 'trend_per_period', 'slope', '추세']),
+    recentChangeRate: numberValue(row, ['recent_change_rate', 'recent_change', '최근변화율']),
+    stability: value(row, ['stability', '안정성']) === null ? null : String(value(row, ['stability', '안정성'])),
+    reasonCode: value(row, ['reason_code', 'reason', '사유코드']) === null ? null : String(value(row, ['reason_code', 'reason', '사유코드'])),
+  };
+}
+
+export function normalizeOlAccuracy(row: Record<string, unknown>): OlAccuracy {
+  return {
+    modelBase: value(row, ['model_base', 'model_id', 'model', '모델']) === null ? null : String(value(row, ['model_base', 'model_id', 'model', '모델'])),
+    fiscalYear: value(row, ['fiscal_year', 'fy', '회계연도']) === null ? null : String(value(row, ['fiscal_year', 'fy', '회계연도'])),
+    period: value(row, ['period', 'month', '월']) === null ? null : String(value(row, ['period', 'month', '월'])),
+    nItems: numberValue(row, ['n_items', 'item_count', '품목수']),
+    actualQty: numberValue(row, ['actual_qty', 'actual', 'actual_total', '실적수량']),
+    forecastQty: numberValue(row, ['forecast_qty', 'forecast', 'forecast_total', '예측수량']),
+    wape: numberValue(row, ['wape', 'WAPE']),
+    mape: numberValue(row, ['mape', 'MAPE']),
+    bias: numberValue(row, ['bias', 'Bias']),
+    rmse: numberValue(row, ['rmse', 'RMSE']),
+    mae: numberValue(row, ['mae', 'MAE']),
+    reasonCode: value(row, ['reason_code', 'reason', '사유코드']) === null ? null : String(value(row, ['reason_code', 'reason', '사유코드'])),
+  };
+}
+
+export function normalizeBomRequirement(row: Record<string, unknown>): BomRequirement {
+  return {
+    modelBase: value(row, ['model_base', 'model', '기준원']) === null ? null : String(value(row, ['model_base', 'model', '기준원'])),
+    itemCode: String(value(row, ['item_code', 'item_id', 'sku', '품목코드']) ?? '미정'),
+    itemName: value(row, ['item_name', '품목명']) === null ? null : String(value(row, ['item_name', '품목명'])),
+    componentItemCode: value(row, ['component_item_code', 'part_item_code', 'component_id', '구성품코드']) === null ? null : String(value(row, ['component_item_code', 'part_item_code', 'component_id', '구성품코드'])),
+    componentItemName: value(row, ['component_item_name', 'part_item_name', '구성품명']) === null ? null : String(value(row, ['component_item_name', 'part_item_name', '구성품명'])),
+    requiredQty: numberValue(row, ['required_qty', 'requirement_qty', 'required_quantity', '필요수량']),
+    bomQty: numberValue(row, ['bom_qty', 'quantity_per', '구성수량']),
+    linkageStatus: value(row, ['linkage_status', 'status', '연결상태']) === null ? null : String(value(row, ['linkage_status', 'status', '연결상태'])),
+    reasonCode: value(row, ['reason_code', 'reason', '사유코드']) === null ? null : String(value(row, ['reason_code', 'reason', '사유코드'])),
   };
 }
