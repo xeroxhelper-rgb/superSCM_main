@@ -347,6 +347,12 @@
   color: var(--color-on-surface);
 }
 
+.comparison-filters, .model-toggle-list { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-3); margin-bottom: var(--space-4); }
+.comparison-filters label { display: grid; gap: var(--space-2); color: var(--color-on-surface-muted); font-size: 12px; }
+.comparison-filters select, .comparison-filters input { min-height: 34px; padding: 0 var(--space-3); border: 1px solid var(--color-outline-variant); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-on-surface); }
+.model-toggle-list { align-items: center; padding: var(--space-3); border: 1px solid var(--color-outline-variant); border-radius: var(--radius-md); color: var(--color-on-surface-muted); font-size: 12px; }
+.model-toggle-list label { color: var(--color-on-surface); }
+
 @media (max-width: 900px) {
   .kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -25,6 +25,7 @@ export const menuByRole: Record<MenuRole, MenuItem[]> = {
     { href: '/workflow?step=calculation', label: '발주량 계산', description: '계산 결과와 예외 검토', icon: ShoppingCart, section: 'WORKFLOW' },
     { href: '/workflow?step=report', label: '보고자료', description: '경영 보고자료 확인', icon: FileText, section: 'WORKFLOW' },
     { href: '/analysis/leadtime', label: '분석 화면', description: '리드타임과 재고 위험 분석', icon: LineChart, section: 'ANALYSIS', matchPrefix: '/analysis' },
+    { href: '/agent', label: 'SCM Agent', description: '데이터 기반 질문과 근거 확인', icon: LineChart, section: 'ANALYSIS', matchPrefix: '/agent' },
   ],
   admin: [
     { href: '/admin', label: '관리자 현황', description: '기준·운영 상태', icon: ShieldCheck, section: 'ADMIN' },

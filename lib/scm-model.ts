@@ -43,6 +43,13 @@ export type ShipmentTrend = {
   averageQty: number | null;
   trend: number | null;
   reasonCode: string | null;
+  monthlyQty?: number | null;
+  avg3m?: number | null;
+  avg6m?: number | null;
+  avg12m?: number | null;
+  observedMonths?: number | null;
+  recentMonth?: string | null;
+  recentQty?: number | null;
 };
 
 export type DemandProfileRt = {
@@ -56,6 +63,7 @@ export type DemandProfileRt = {
   recentChangeRate: number | null;
   stability: string | null;
   reasonCode: string | null;
+  observedMonths?: number | null;
 };
 
 export type OlAccuracy = {
@@ -71,6 +79,7 @@ export type OlAccuracy = {
   rmse: number | null;
   mae: number | null;
   reasonCode: string | null;
+  olType?: string | null;
 };
 
 export type BomRequirement = {
@@ -83,6 +92,11 @@ export type BomRequirement = {
   bomQty: number | null;
   linkageStatus: string | null;
   reasonCode: string | null;
+  capItemCode?: string | null;
+  optionRole?: string | null;
+  scc?: string | null;
+  label?: string | null;
+  common?: boolean | null;
 };
 
 function value(row: Record<string, unknown>, keys: string[]) {
@@ -149,7 +163,7 @@ export function normalizeStockoutKpi(row: Record<string, unknown>): StockoutKpi 
 }
 
 export function normalizeShipmentTrend(row: Record<string, unknown>): ShipmentTrend {
-  return {
+  const result: ShipmentTrend = {
     itemCode: String(value(row, ['item_code', 'item_id', 'sku', '품목코드']) ?? '미정'),
     itemName: value(row, ['item_name', '품목명']) === null ? null : String(value(row, ['item_name', '품목명'])),
     period: value(row, ['period', 'month', 'shipment_month', '월']) === null ? null : String(value(row, ['period', 'month', 'shipment_month', '월'])),
@@ -159,11 +173,21 @@ export function normalizeShipmentTrend(row: Record<string, unknown>): ShipmentTr
     trend: numberValue(row, ['trend', 'trend_per_period', 'slope', '추세']),
     reasonCode: value(row, ['reason_code', 'reason', '사유코드']) === null ? null : String(value(row, ['reason_code', 'reason', '사유코드'])),
   };
+  if (Object.keys(row).some((key) => ['monthly_qty', 'avg_3m', 'avg_6m', 'avg_12m', 'observed_months', 'recent_month', 'recent_qty'].includes(key))) {
+    result.monthlyQty = numberValue(row, ['monthly_qty', 'shipped_qty', 'shipment_qty', 'total_qty', '출하수량']);
+    result.avg3m = numberValue(row, ['avg_3m', 'average_3m', 'rolling_3m']);
+    result.avg6m = numberValue(row, ['avg_6m', 'average_6m', 'rolling_6m']);
+    result.avg12m = numberValue(row, ['avg_12m', 'average_12m', 'rolling_12m']);
+    result.observedMonths = numberValue(row, ['observed_months', 'n_months', '관측개월수']);
+    result.recentMonth = value(row, ['recent_month', 'latest_month', '최근월']) === null ? null : String(value(row, ['recent_month', 'latest_month', '최근월']));
+    result.recentQty = numberValue(row, ['recent_qty', 'latest_qty', '최근수량']);
+  }
+  return result;
 }
 
 export function normalizeDemandProfileRt(row: Record<string, unknown>): DemandProfileRt {
   const demandType = value(row, ['demand_type', 'demand_class', 'pattern_type', '수요유형']);
-  return {
+  const result: DemandProfileRt = {
     itemCode: String(value(row, ['item_code', 'item_id', 'sku', '품목코드']) ?? '미정'),
     itemName: value(row, ['item_name', '품목명']) === null ? null : String(value(row, ['item_name', '품목명'])),
     demandType: demandType === null ? null : String(demandType).toUpperCase(),
@@ -175,10 +199,14 @@ export function normalizeDemandProfileRt(row: Record<string, unknown>): DemandPr
     stability: value(row, ['stability', '안정성']) === null ? null : String(value(row, ['stability', '안정성'])),
     reasonCode: value(row, ['reason_code', 'reason', '사유코드']) === null ? null : String(value(row, ['reason_code', 'reason', '사유코드'])),
   };
+  if (Object.keys(row).some((key) => ['observed_months', 'n_months', '관측개월수'].includes(key))) {
+    result.observedMonths = numberValue(row, ['observed_months', 'n_months', '관측개월수']);
+  }
+  return result;
 }
 
 export function normalizeOlAccuracy(row: Record<string, unknown>): OlAccuracy {
-  return {
+  const result: OlAccuracy = {
     modelBase: value(row, ['model_base', 'model_id', 'model', '모델']) === null ? null : String(value(row, ['model_base', 'model_id', 'model', '모델'])),
     fiscalYear: value(row, ['fiscal_year', 'fy', '회계연도']) === null ? null : String(value(row, ['fiscal_year', 'fy', '회계연도'])),
     period: value(row, ['period', 'month', '월']) === null ? null : String(value(row, ['period', 'month', '월'])),
@@ -192,10 +220,14 @@ export function normalizeOlAccuracy(row: Record<string, unknown>): OlAccuracy {
     mae: numberValue(row, ['mae', 'MAE']),
     reasonCode: value(row, ['reason_code', 'reason', '사유코드']) === null ? null : String(value(row, ['reason_code', 'reason', '사유코드'])),
   };
+  if (Object.keys(row).some((key) => ['ol_type', 'forecast_type', '구분'].includes(key))) {
+    result.olType = value(row, ['ol_type', 'forecast_type', '구분']) === null ? null : String(value(row, ['ol_type', 'forecast_type', '구분']));
+  }
+  return result;
 }
 
 export function normalizeBomRequirement(row: Record<string, unknown>): BomRequirement {
-  return {
+  const result: BomRequirement = {
     modelBase: value(row, ['model_base', 'model', '기준원']) === null ? null : String(value(row, ['model_base', 'model', '기준원'])),
     itemCode: String(value(row, ['item_code', 'item_id', 'sku', '품목코드']) ?? '미정'),
     itemName: value(row, ['item_name', '품목명']) === null ? null : String(value(row, ['item_name', '품목명'])),
@@ -206,4 +238,12 @@ export function normalizeBomRequirement(row: Record<string, unknown>): BomRequir
     linkageStatus: value(row, ['linkage_status', 'status', '연결상태']) === null ? null : String(value(row, ['linkage_status', 'status', '연결상태'])),
     reasonCode: value(row, ['reason_code', 'reason', '사유코드']) === null ? null : String(value(row, ['reason_code', 'reason', '사유코드'])),
   };
+  if (Object.keys(row).some((key) => ['cap_item_code', 'option_role', 'scc', 'label', 'common'].includes(key))) {
+    result.capItemCode = value(row, ['cap_item_code', 'cap_code', 'cap_item_id']) === null ? null : String(value(row, ['cap_item_code', 'cap_code', 'cap_item_id']));
+    result.optionRole = value(row, ['option_role', 'role']) === null ? null : String(value(row, ['option_role', 'role']));
+    result.scc = value(row, ['scc', 'scc_code']) === null ? null : String(value(row, ['scc', 'scc_code']));
+    result.label = value(row, ['label', 'label_code']) === null ? null : String(value(row, ['label', 'label_code']));
+    result.common = typeof row.common === 'boolean' ? row.common : value(row, ['common', 'common_flag']) === null ? null : String(value(row, ['common', 'common_flag'])).toUpperCase() === 'COMMON';
+  }
+  return result;
 }
