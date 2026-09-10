@@ -200,3 +200,9 @@ select
 ### 검증 상태
 
 Auth 사용자 존재는 첨부 화면으로 확인되었지만, `core.app_user` 조회 결과와 Supabase API 오류 본문은 아직 확인되지 않았습니다. 따라서 현재는 프로필 조회 계층의 문제로 범위를 좁혔으며, 위 진단 SQL 결과로 최종 원인을 확정해야 합니다.
+
+### Vercel 로그 확인 결과
+
+2026-09-10 Production에서 `POST /login`이 Status 200, Middleware 200으로 완료되었습니다. 따라서 Vercel Routing/Middleware 장애가 아니라 Server Action이 내부 오류를 일반 로그인 메시지로 반환하는 상황입니다. 기존 코드가 Supabase 오류 상세를 로그로 남기지 않아 다음 배포부터 인증·프로필·로그인 기록 저장 단계별로 `code`, `status`, `message`, `details`, `hint`만 서버 로그에 기록하도록 보강했습니다. 비밀번호·토큰·API key·사용자 입력값은 기록하지 않습니다.
+
+다음 확인은 새 배포 후 로그인 직시 Vercel Logs에서 `[로그인] app_user 프로필 조회 실패` 또는 `[로그인] 마지막 로그인 시각 저장 실패`를 검색하는 것입니다.
