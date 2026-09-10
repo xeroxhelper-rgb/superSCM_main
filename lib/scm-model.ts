@@ -52,6 +52,45 @@ export type ShipmentTrend = {
   recentQty?: number | null;
 };
 
+export type ItemDemandProfile = {
+  itemCode: string;
+  description: string | null;
+  family: string | null;
+  itemType: string | null;
+  dataAsOf: string | null;
+  firstYm: string | null;
+  lastYm: string | null;
+  nPeriods: number | null;
+  nNonzero: number | null;
+  meanNonzeroQty: number | null;
+  adi: number | null;
+  zeroDemandRate: number | null;
+  cvSquared: number | null;
+  demandType: 'SMOOTH' | 'INTERMITTENT' | 'ERRATIC' | 'LUMPY' | null;
+  reasonCode: string | null;
+};
+
+export type ItemDemandKpi = {
+  itemType: string | null;
+  nItems: number | null;
+  nSmooth: number | null;
+  nErratic: number | null;
+  nIntermittent: number | null;
+  nLumpy: number | null;
+  nUnknown: number | null;
+  nCrostonCandidate: number | null;
+};
+
+export type OlAccuracyFy = {
+  fiscalYear: string | null;
+  nRows: number | null;
+  nScored: number | null;
+  salesWape: number | null;
+  scmWape: number | null;
+  salesBias: number | null;
+  scmBias: number | null;
+};
+
 export type DemandProfileRt = {
   itemCode: string;
   itemName: string | null;
@@ -246,4 +285,51 @@ export function normalizeBomRequirement(row: Record<string, unknown>): BomRequir
     result.common = typeof row.common === 'boolean' ? row.common : value(row, ['common', 'common_flag']) === null ? null : String(value(row, ['common', 'common_flag'])).toUpperCase() === 'COMMON';
   }
   return result;
+}
+
+export function normalizeItemDemandProfile(row: Record<string, unknown>): ItemDemandProfile {
+  const type = value(row, ['demand_type', 'demand_class', 'pattern_type']);
+  const validType = type === 'SMOOTH' || type === 'INTERMITTENT' || type === 'ERRATIC' || type === 'LUMPY' ? type : null;
+  return {
+    itemCode: String(value(row, ['item_code', 'item_id', 'sku']) ?? '미정'),
+    description: value(row, ['description', 'item_name', 'item_description']) as string | null,
+    family: value(row, ['family', 'item_family']) as string | null,
+    itemType: value(row, ['item_type', 'type']) as string | null,
+    dataAsOf: value(row, ['data_as_of', 'last_updated_at']) as string | null,
+    firstYm: value(row, ['first_ym', 'first_month']) as string | null,
+    lastYm: value(row, ['last_ym', 'last_month']) as string | null,
+    nPeriods: numberValue(row, ['n_periods', 'observed_months', 'n_months']),
+    nNonzero: numberValue(row, ['n_nonzero', 'n_nonzero_periods']),
+    meanNonzeroQty: numberValue(row, ['mean_nonzero_qty', 'average_nonzero_qty']),
+    adi: numberValue(row, ['adi', 'average_demand_interval']),
+    zeroDemandRate: numberValue(row, ['zero_demand_rate', 'zero_rate']),
+    cvSquared: numberValue(row, ['cv_squared', 'cv2', 'cv_sq']),
+    demandType: validType,
+    reasonCode: value(row, ['reason_code', 'reason']) as string | null,
+  };
+}
+
+export function normalizeItemDemandKpi(row: Record<string, unknown>): ItemDemandKpi {
+  return {
+    itemType: value(row, ['item_type', 'type']) as string | null,
+    nItems: numberValue(row, ['n_items', 'item_count']),
+    nSmooth: numberValue(row, ['n_smooth']),
+    nErratic: numberValue(row, ['n_erratic']),
+    nIntermittent: numberValue(row, ['n_intermittent']),
+    nLumpy: numberValue(row, ['n_lumpy']),
+    nUnknown: numberValue(row, ['n_unknown', 'n_calculation_unavailable']),
+    nCrostonCandidate: numberValue(row, ['n_croston_candidate', 'n_croston_needed']),
+  };
+}
+
+export function normalizeOlAccuracyFy(row: Record<string, unknown>): OlAccuracyFy {
+  return {
+    fiscalYear: value(row, ['fy_sheet', 'fiscal_year', 'fy']) as string | null,
+    nRows: numberValue(row, ['n_rows', 'n_items']),
+    nScored: numberValue(row, ['n_scored']),
+    salesWape: numberValue(row, ['sales_wape']),
+    scmWape: numberValue(row, ['scm_wape']),
+    salesBias: numberValue(row, ['sales_bias']),
+    scmBias: numberValue(row, ['scm_bias']),
+  };
 }

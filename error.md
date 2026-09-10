@@ -145,3 +145,58 @@ Directory import '.../lib/supabase' is not supported resolving ES modules from l
 ### 검증
 
 `npm run build`에서 `/agent`, `/`, `/analysis/leadtime`, `/analysis/stockout` 라우트가 정상 생성되고 exit code 0을 확인했습니다. Node 직접 실행 시에는 위 제한으로 실제 Supabase 행을 출력하지 않고 ToolResult의 `ok=false`, `reason`만 반환합니다.
+
+## 2026-09-04 — 로그인 후 `사용자 정보를 확인하지 못했습니다.`
+
+### 증상
+
+Supabase Authentication > Users에는 `wanidc@naver.com`과 기존 계정이 존재하지만 애플리케이션 로그인 화면에서 `사용자 정보를 확인하지 못했습니다.`가 표시됩니다.
+
+### 원인 분석
+
+현재 로그인 흐름에서 이 문구는 `auth.signInWithPassword`가 성공한 뒤 `core.app_user` 조회가 오류를 반환할 때만 표시됩니다. 따라서 Auth 계정 자체가 없는 문제보다는 `core.app_user`의 API 스키마 노출, authenticated 권한/RLS, 또는 프로필 테이블 상태를 먼저 확인해야 합니다. 프로필 행이 단순히 없는 경우에는 별도의 `비활성화된 계정입니다.` 경로가 실행됩니다.
+
+### 확인 및 해결
+
+Supabase SQL Editor에서 Auth 사용자와 애플리케이션 프로필을 먼저 대조합니다.
+
+```sql
+select
+  u.email as auth_email,
+  u.id as auth_user_id,
+  a.user_id as app_user_id,
+  a.name,
+  a.role,
+  a.active
+from auth.users u
+left join core.app_user a on a.user_id = u.id
+where lower(u.email) in (lower('wanidc@naver.com'), lower('xeroxhelper@gmail.com'));
+```
+
+각 계정에 `app_user_id`, `name`, `role`, `active=true`가 있어야 합니다. 프로필 행이 없으면 해당 계정에 한해 다음 backfill을 실행합니다.
+
+```sql
+insert into core.app_user (user_id, email, name, department, role)
+select u.id,
+       coalesce(u.email, ''),
+       coalesce(nullif(u.raw_user_meta_data ->> 'name', ''), split_part(coalesce(u.email, 'user'), '@', 1)),
+       nullif(u.raw_user_meta_data ->> 'department', ''),
+       'USER'
+from auth.users u
+where lower(u.email) in (lower('wanidc@naver.com'), lower('xeroxhelper@gmail.com'))
+on conflict (user_id) do nothing;
+```
+
+그 다음 Settings → API → Data API → Exposed schemas에 `core`, `analytics`가 포함되어 있는지 확인하고, 권한을 SQL로 확인합니다.
+
+```sql
+select
+  has_schema_privilege('authenticated', 'core', 'USAGE') as core_usage,
+  has_table_privilege('authenticated', 'core.app_user', 'SELECT') as app_user_select;
+```
+
+두 값이 모두 `true`여야 합니다. 그래도 실패하면 Supabase Logs의 PostgREST 오류와 로그인 재시도 시각을 확인합니다. 비밀번호나 secret/service key를 앱 또는 SQL에 입력하지 않습니다.
+
+### 검증 상태
+
+Auth 사용자 존재는 첨부 화면으로 확인되었지만, `core.app_user` 조회 결과와 Supabase API 오류 본문은 아직 확인되지 않았습니다. 따라서 현재는 프로필 조회 계층의 문제로 범위를 좁혔으며, 위 진단 SQL 결과로 최종 원인을 확정해야 합니다.

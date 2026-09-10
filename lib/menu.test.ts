@@ -15,6 +15,8 @@ test('USER 메뉴는 원래 업무 흐름과 분석 그룹 순서를 유지한�
       ['WORKFLOW', '발주량 계산'],
       ['WORKFLOW', '보고자료'],
     ['ANALYSIS', '분석 화면'],
+    ['ANALYSIS', '수요 패턴'],
+    ['ANALYSIS', 'OL 예측 정확도'],
     ['ANALYSIS', 'SCM Agent'],
     ],
   );

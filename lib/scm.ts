@@ -1,5 +1,7 @@
 import { createSupabaseServerClient } from './supabase';
-import { normalizeBomRequirement, normalizeDemandProfileRt, normalizeLeadtimeGap, normalizeOlAccuracy, normalizeShipmentTrend, normalizeStockoutKpi, normalizeStockoutRisk, type BomRequirement, type DemandProfileRt, type LeadtimeGap, type OlAccuracy, type ShipmentTrend, type StockoutKpi, type StockoutRisk } from './scm-model';
+import { normalizeBomRequirement, normalizeDemandProfileRt, normalizeItemDemandKpi, normalizeItemDemandProfile, normalizeLeadtimeGap, normalizeOlAccuracy, normalizeOlAccuracyFy, normalizeShipmentTrend, normalizeStockoutKpi, normalizeStockoutRisk, type BomRequirement, type DemandProfileRt, type ItemDemandKpi, type ItemDemandProfile, type LeadtimeGap, type OlAccuracy, type OlAccuracyFy, type ShipmentTrend, type StockoutKpi, type StockoutRisk } from './scm-model';
+
+type QueryResult<T> = { rows: T[]; error: string | null };
 
 export async function getLeadtimeGap(): Promise<{ rows: LeadtimeGap[]; error: string | null }> {
   try {
@@ -142,3 +144,54 @@ export async function getBomRequirement(modelBase: string): Promise<{ rows: BomR
     return { rows: [], error: error instanceof Error ? error.message : 'Supabase 조회에 실패했습니다.' };
   }
 }
+
+/** 실데이터 수요 프로파일 — analytics.v_item_demand_profile */
+export async function getItemDemandProfiles(): Promise<QueryResult<ItemDemandProfile>> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase.schema('analytics').from('v_item_demand_profile').select('*').order('item_code');
+    if (error) return { rows: [], error: error.message };
+    return { rows: (data ?? []).map((row) => normalizeItemDemandProfile(row as Record<string, unknown>)), error: null };
+  } catch (error) {
+    return { rows: [], error: error instanceof Error ? error.message : '수요 프로파일을 조회하지 못했습니다.' };
+  }
+}
+
+/** 실데이터 수요 유형 KPI — analytics.v_item_demand_kpi */
+export async function getItemDemandKpi(): Promise<QueryResult<ItemDemandKpi>> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase.schema('analytics').from('v_item_demand_kpi').select('*').order('item_type');
+    if (error) return { rows: [], error: error.message };
+    return { rows: (data ?? []).map((row) => normalizeItemDemandKpi(row as Record<string, unknown>)), error: null };
+  } catch (error) {
+    return { rows: [], error: error instanceof Error ? error.message : '수요 KPI를 조회하지 못했습니다.' };
+  }
+}
+
+/** 실데이터 출고 추이 — XCN 합산이 반영된 analytics.v_shipment_trend */
+export async function getShipmentTrends(): Promise<QueryResult<ShipmentTrend>> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase.schema('analytics').from('v_shipment_trend').select('*').order('total_qty', { ascending: false, nullsFirst: false });
+    if (error) return { rows: [], error: error.message };
+    return { rows: (data ?? []).map((row) => normalizeShipmentTrend(row as Record<string, unknown>)), error: null };
+  } catch (error) {
+    return { rows: [], error: error instanceof Error ? error.message : '출고 추이를 조회하지 못했습니다.' };
+  }
+}
+
+/** 회계연도 합산 OL 정확도 — analytics.v_ol_accuracy_fy */
+export async function getOlAccuracyFy(): Promise<QueryResult<OlAccuracyFy>> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase.schema('analytics').from('v_ol_accuracy_fy').select('*').order('fy_sheet');
+    if (error) return { rows: [], error: error.message };
+    return { rows: (data ?? []).map((row) => normalizeOlAccuracyFy(row as Record<string, unknown>)), error: null };
+  } catch (error) {
+    return { rows: [], error: error instanceof Error ? error.message : 'OL 정확도 요약을 조회하지 못했습니다.' };
+  }
+}
+
+/** 기준 프로젝트 명칭과의 호환 alias */
+export const getBomRequirements = getBomRequirement;
