@@ -27,6 +27,7 @@ export const menuByRole: Record<MenuRole, MenuItem[]> = {
     { href: '/analysis/leadtime', label: '분석 화면', description: '리드타임과 재고 위험 분석', icon: LineChart, section: 'ANALYSIS', matchPrefix: '/analysis' },
     { href: '/analysis/demand-profile', label: '수요 패턴', description: '출고 실적 기반 수요 성격 분류', icon: BarChart3, section: 'ANALYSIS', matchPrefix: '/analysis/demand-profile' },
     { href: '/analysis/model-comparison', label: 'OL 예측 정확도', description: '영업 OL과 SCM OL 정확도', icon: LineChart, section: 'ANALYSIS', matchPrefix: '/analysis/model-comparison' },
+    { href: '/analysis/stockout', label: '재고 소진 위험', description: '재고 소진 예상과 위험 품목', icon: Boxes, section: 'ANALYSIS', matchPrefix: '/analysis/stockout' },
     { href: '/agent', label: 'SCM Agent', description: '데이터 기반 질문과 근거 확인', icon: LineChart, section: 'ANALYSIS', matchPrefix: '/agent' },
   ],
   admin: [
@@ -46,6 +47,13 @@ export const menuByRole: Record<MenuRole, MenuItem[]> = {
 
 export const USER_MENU = menuByRole.user;
 export const ADMIN_MENU = menuByRole.admin;
+
+export function isMenuItemActive(pathname: string, search: string, item: MenuItem): boolean {
+  if (item.matchPrefix && pathname.startsWith(item.matchPrefix)) return true;
+  const target = new URL(item.href, 'http://localhost');
+  if (target.pathname !== pathname) return false;
+  return target.search === '' || target.search === search;
+}
 
 export function menuForRole(role: 'ADMIN' | 'USER'): MenuItem[] {
   return role === 'ADMIN' ? [...USER_MENU, ...ADMIN_MENU] : USER_MENU;

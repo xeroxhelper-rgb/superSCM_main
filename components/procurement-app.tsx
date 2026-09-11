@@ -1,8 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
-import { AlertTriangle, BarChart3, Boxes, Check, ChevronLeft, ChevronRight, CircleDollarSign, ClipboardCheck, FileSpreadsheet, FileText, Gauge, LineChart, Layers3, PackageCheck, Settings2, ShoppingCart, Upload, Workflow, Wrench } from 'lucide-react';
+import { AlertTriangle, BarChart3, Boxes, Check, CircleDollarSign, ClipboardCheck, FileSpreadsheet, FileText, Gauge, Layers3, PackageCheck, Settings2, ShoppingCart, Upload, Workflow, Wrench } from 'lucide-react';
 import DashboardStep from '@/components/workflow/dashboard-step';
 import DemandStep from '@/components/workflow/demand-step';
 import SupplyStep from '@/components/workflow/supply-step';
@@ -25,7 +24,6 @@ const steps: { id: StepId; label: string; short: string; kicker: string; icon: t
 export default function ProcurementApp({ initialStep = 'dashboard' }: { initialStep?: StepId }) {
   const [active, setActive] = useState<StepId>(initialStep);
   const currentIndex = steps.findIndex((step) => step.id === active);
-  const current = steps[currentIndex];
   const completedCount = Math.max(0, currentIndex);
   const navigate = (index: number) => setActive(steps[Math.max(0, Math.min(index, steps.length - 1))].id);
   const goNext = () => navigate(currentIndex + 1);
@@ -44,39 +42,7 @@ export default function ProcurementApp({ initialStep = 'dashboard' }: { initialS
   }, [active]);
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-mark">OP</div>
-          <div className="brand-copy"><strong>월간 발주계획</strong><span>Procurement Planning</span></div>
-        </div>
-        <div className="nav-label">WORKFLOW</div>
-        <nav className="nav-list" aria-label="업무 단계">
-          {steps.map((step, index) => {
-            const Icon = step.icon;
-            const isDone = index < currentIndex;
-            return <button key={step.id} className={`nav-button ${active === step.id ? 'active' : ''} ${isDone ? 'complete' : ''}`} onClick={() => navigate(index)}>
-              <span className="nav-number">{isDone ? <Check size={12} strokeWidth={3} /> : <Icon size={13} />}</span>
-              <span>{step.label}</span>
-            </button>;
-          })}
-        </nav>
-        <div className="nav-label nav-label-gap">ANALYSIS</div>
-        <nav className="nav-list" aria-label="분석 화면">
-          <Link href="/analysis/leadtime" className="nav-button nav-link">
-            <span className="nav-number"><LineChart size={13} /></span>
-            <span>분석 화면</span>
-            <ChevronRight size={13} className="nav-link-arrow" />
-          </Link>
-        </nav>
-        <div className="sidebar-foot"><b>2026년 09월 발주계획</b><br />로컬 프로토타입 · Phase 1<br />상세 계산·저장은 다음 단계에서 연결됩니다.</div>
-      </aside>
-      <main className="main">
-        <header className="topbar">
-          <div><div className="eyebrow">MONTHLY PROCUREMENT CONTROL</div><h1>{current.label}</h1></div>
-          <div className="top-meta"><span className="local-badge">LOCAL PROTOTYPE</span><span>기준월도 <b>2026.09</b></span></div>
-        </header>
-        <div className="content">
+        <div className="workflow-content">
           <div className="progress-wrap">
             <div className="progress-track">
               {steps.map((step, index) => <div key={step.id} className="progress-step-wrap" style={{ display: 'contents' }}>
@@ -92,8 +58,6 @@ export default function ProcurementApp({ initialStep = 'dashboard' }: { initialS
           </div>
           {page}
         </div>
-      </main>
-    </div>
   );
 }
 

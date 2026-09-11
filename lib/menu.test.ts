@@ -16,10 +16,22 @@ test('USER 메뉴는 원래 업무 흐름과 분석 그룹 순서를 유지한�
       ['WORKFLOW', '보고자료'],
     ['ANALYSIS', '분석 화면'],
     ['ANALYSIS', '수요 패턴'],
-    ['ANALYSIS', 'OL 예측 정확도'],
-    ['ANALYSIS', 'SCM Agent'],
+      ['ANALYSIS', 'OL 예측 정확도'],
+      ['ANALYSIS', '재고 소진 위험'],
+      ['ANALYSIS', 'SCM Agent'],
     ],
   );
+});
+
+test('쿼리스트링이 있는 워크플로우 메뉴도 현재 단계로 활성화한다', () => {
+  const isMenuItemActive = (menuModule as typeof menuModule & {
+    isMenuItemActive?: (pathname: string, search: string, item: menuModule.MenuItem) => boolean;
+  }).isMenuItemActive;
+  const demand = menuModule.menuByRole.user.find((item) => item.label === '수요 확정');
+
+  assert.equal(typeof isMenuItemActive, 'function');
+  assert.equal(isMenuItemActive?.('/workflow', '?step=demand', demand!), true);
+  assert.equal(isMenuItemActive?.('/workflow', '?step=supply', demand!), false);
 });
 
 test('workflow query는 허용된 단계만 초기 단계로 변환한다', () => {

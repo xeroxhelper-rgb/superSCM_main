@@ -206,3 +206,54 @@ Auth 사용자 존재는 첨부 화면으로 확인되었지만, `core.app_user`
 2026-09-10 Production에서 `POST /login`이 Status 200, Middleware 200으로 완료되었습니다. 따라서 Vercel Routing/Middleware 장애가 아니라 Server Action이 내부 오류를 일반 로그인 메시지로 반환하는 상황입니다. 기존 코드가 Supabase 오류 상세를 로그로 남기지 않아 다음 배포부터 인증·프로필·로그인 기록 저장 단계별로 `code`, `status`, `message`, `details`, `hint`만 서버 로그에 기록하도록 보강했습니다. 비밀번호·토큰·API key·사용자 입력값은 기록하지 않습니다.
 
 다음 확인은 새 배포 후 로그인 직시 Vercel Logs에서 `[로그인] app_user 프로필 조회 실패` 또는 `[로그인] 마지막 로그인 시각 저장 실패`를 검색하는 것입니다.
+
+## 2026-09-10 — `permission denied for function is_admin`
+
+### 오류
+
+Vercel Runtime Logs에서 다음 오류가 확인되었습니다.
+
+```text
+[로그인] app_user 프로필 조회 실패
+code: 42501
+message: permission denied for function is_admin
+```
+
+### 원인
+
+`core.app_user`의 authenticated SELECT RLS 정책이 `core.is_admin()`을 호출하지만, 해당 함수에 `authenticated` 역할의 EXECUTE 권한이 부여되지 않았습니다. 프로필 행·컬럼·테이블 SELECT 권한은 정상이어도 RLS 정책 평가 단계에서 함수 권한 오류가 발생합니다.
+
+### 해결
+
+Supabase SQL Editor에서 즉시 다음을 실행합니다.
+
+```sql
+revoke all on function core.is_admin() from public;
+grant execute on function core.is_admin() to authenticated;
+```
+
+확인은 다음 쿼리로 합니다.
+
+```sql
+select has_function_privilege('authenticated', 'core.is_admin()', 'execute') as is_admin_execute;
+```
+
+결과가 `true`이면 Vercel에서 다시 로그인합니다. 재발 방지를 위해 `20260910000100_fix_is_admin_execute_grant.sql` Migration에도 동일한 권한 보강을 추가했습니다.
+
+## 2026-09-11 — Workflow 이동 시 구형 UI와 분석 메뉴 누락
+
+### 증상
+
+분석 화면에서 Workflow 메뉴로 이동하면 화면이 기존 밝은 디자인으로 바뀌고, 사이드바의 `ANALYSIS` 메뉴 일부가 표시되지 않았습니다.
+
+### 원인
+
+`/analysis/*`는 `(user)` 레이아웃의 새 다크 셸을 사용했지만 `/workflow`는 `(legacy)` 레이아웃에서 `ProcurementApp`이 구형 셸을 직접 렌더링하고 있었습니다. 또한 구형 셸은 분석 메뉴를 `분석 화면` 하나만 하드코딩했고, 사용자 공통 메뉴에도 `재고 소진 위험` 항목이 빠져 있었습니다.
+
+### 해결
+
+`(legacy)` 레이아웃도 사용자용 `Sidebar`와 `Topbar`를 사용하도록 통합하고, `ProcurementApp`은 워크플로우 콘텐츠만 렌더링하도록 변경했습니다. 워크플로우 단계의 쿼리스트링을 기준으로 사이드바 활성 상태를 판정하는 공통 함수도 추가했습니다. 사용자 메뉴에 `재고 소진 위험`을 추가해 분석 탭과 사이드바 목록을 일치시켰습니다.
+
+### 검증
+
+`node --test lib/menu.test.ts` 통과(4개), `npm run build` 성공. `/workflow`, `/analysis/stockout` 라우트가 모두 빌드 결과에 포함되는 것을 확인했습니다.

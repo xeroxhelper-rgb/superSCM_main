@@ -1168,3 +1168,126 @@ td,
   margin-left: auto;
   opacity: 0.55;
 }
+
+/* ── 워크플로우도 사용자용 다크 셸을 공유한다 ─────────────── */
+.workflow-content .progress-wrap,
+.workflow-content .card {
+  background: var(--color-surface);
+  border-color: var(--color-outline-variant);
+  box-shadow: none;
+}
+.workflow-content .progress-wrap {
+  margin-bottom: var(--space-8);
+}
+.workflow-content .progress-step.active,
+.workflow-content .progress-step.done,
+.workflow-content .progress-step.active .progress-label,
+.workflow-content .progress-step.done .progress-label {
+  color: var(--color-on-surface);
+}
+.workflow-content .progress-step.active .progress-kicker,
+.workflow-content .progress-step.done .progress-kicker {
+  color: var(--color-primary);
+}
+.workflow-content .progress-dot {
+  background: var(--color-surface);
+  border-color: var(--color-outline-variant);
+  box-shadow: 0 0 0 5px var(--color-surface);
+}
+.workflow-content .progress-step.active .progress-dot {
+  background: var(--color-surface);
+  border-color: var(--color-primary-container);
+  color: var(--color-primary);
+  box-shadow: 0 0 0 5px var(--color-surface), 0 0 0 7px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+.workflow-content .progress-step.done .progress-dot {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: var(--color-bg, #0e0e0e);
+}
+.workflow-content .progress-line {
+  background: var(--color-outline-variant);
+}
+.workflow-content .progress-caption,
+.workflow-content .page-heading p,
+.workflow-content .metric-label,
+.workflow-content .metric-foot,
+.workflow-content .section-heading span,
+.workflow-content .card-title span,
+.workflow-content .step-footer span,
+.workflow-content .muted {
+  color: var(--color-on-surface-muted);
+}
+.workflow-content .page-heading h2,
+.workflow-content .section-heading h3,
+.workflow-content .card-title h3,
+.workflow-content .metric-value,
+.workflow-content .flow-card h3,
+.workflow-content .sample-input b,
+.workflow-content .report-preview h4 {
+  color: var(--color-on-surface);
+}
+.workflow-content .button {
+  background: var(--color-surface-high);
+  border-color: var(--color-outline-variant);
+  color: var(--color-on-surface);
+}
+.workflow-content .button:hover {
+  background: var(--color-surface-highest);
+  border-color: var(--color-primary);
+}
+.workflow-content .button.primary {
+  background: var(--color-primary-container);
+  border-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+.workflow-content .table-wrap {
+  border-color: var(--color-outline-variant);
+}
+.workflow-content th {
+  background: var(--color-surface-high);
+  color: var(--color-on-surface-muted);
+}
+.workflow-content td {
+  border-color: var(--color-outline-variant);
+  color: var(--color-on-surface);
+}
+.workflow-content .demand-tabs {
+  border-color: var(--color-outline-variant);
+}
+.workflow-content .demand-tab {
+  color: var(--color-on-surface-muted);
+}
+.workflow-content .demand-tab.active {
+  color: var(--color-primary);
+}
+.workflow-content .toolbar-group label,
+.workflow-content .form-stack label {
+  color: var(--color-on-surface-muted);
+}
+.workflow-content .toolbar-group select,
+.workflow-content .table-select,
+.workflow-content .form-input,
+.workflow-content .table-input {
+  background: var(--color-surface-high);
+  border-color: var(--color-outline-variant);
+  color: var(--color-on-surface);
+}
+.workflow-content .toolbar-divider,
+.workflow-content .step-footer {
+  border-color: var(--color-outline-variant);
+}
+.workflow-content .toolbar-divider {
+  background: var(--color-outline-variant);
+}
+.workflow-content .sample-input,
+.workflow-content .meeting-result,
+.workflow-content .report-preview {
+  background: var(--color-surface-high);
+  border-color: var(--color-outline-variant);
+}
+.workflow-content .sample-input span,
+.workflow-content .meeting-result,
+.workflow-content .meeting-result span {
+  color: var(--color-on-surface-muted);
+}
