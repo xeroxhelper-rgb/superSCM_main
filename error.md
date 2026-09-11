@@ -257,3 +257,21 @@ select has_function_privilege('authenticated', 'core.is_admin()', 'execute') as 
 ### 검증
 
 `node --test lib/menu.test.ts` 통과(4개), `npm run build` 성공. `/workflow`, `/analysis/stockout` 라우트가 모두 빌드 결과에 포함되는 것을 확인했습니다.
+
+## 2026-09-11 — Workflow 메뉴 클릭 후 화면 단계가 바뀌지 않음
+
+### 증상
+
+사이드바에서 `수요 확정`부터 `보고자료`까지의 Workflow 메뉴를 클릭해도 URL의 `step` 값만 바뀌고 화면은 이전 단계에 머물렀습니다.
+
+### 원인
+
+`ProcurementApp`이 `initialStep`을 `useState`의 최초값으로만 사용했습니다. Next.js 클라이언트 이동으로 `/workflow?step=...`가 변경되어도 컴포넌트 인스턴스가 유지되므로, 새 쿼리값이 `active` 상태에 반영되지 않았습니다.
+
+### 해결
+
+현재 URL의 `step` 쿼리를 `workflowStepFromSearch`로 해석하고, `useSearchParams` 변경 시 `active` 상태를 동기화하도록 수정했습니다. 잘못된 단계나 빈 쿼리는 `dashboard`로 안전하게 처리합니다.
+
+### 검증
+
+수정 전 회귀 테스트가 실패하는 것을 확인한 뒤 수정했고, `node --test lib/menu.test.ts` 5개 통과 및 `npm run build` 성공을 확인했습니다.

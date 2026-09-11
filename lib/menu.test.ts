@@ -34,6 +34,17 @@ test('쿼리스트링이 있는 워크플로우 메뉴도 현재 단계로 활�
   assert.equal(isMenuItemActive?.('/workflow', '?step=supply', demand!), false);
 });
 
+test('Workflow URL의 step 쿼리를 화면 단계로 변환한다', () => {
+  const workflowStepFromSearch = (menuModule as typeof menuModule & {
+    workflowStepFromSearch?: (search: string) => menuModule.WorkflowStep;
+  }).workflowStepFromSearch;
+
+  assert.equal(workflowStepFromSearch?.('?step=demand'), 'demand');
+  assert.equal(workflowStepFromSearch?.('?step=report'), 'report');
+  assert.equal(workflowStepFromSearch?.('?step=unknown'), 'dashboard');
+  assert.equal(workflowStepFromSearch?.(''), 'dashboard');
+});
+
 test('workflow query는 허용된 단계만 초기 단계로 변환한다', () => {
   const workflowStepFromParam = (menuModule as typeof menuModule & {
     workflowStepFromParam?: (value: string | string[] | undefined) => string;

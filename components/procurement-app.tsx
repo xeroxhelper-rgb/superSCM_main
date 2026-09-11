@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AlertTriangle, BarChart3, Boxes, Check, CircleDollarSign, ClipboardCheck, FileSpreadsheet, FileText, Gauge, Layers3, PackageCheck, Settings2, ShoppingCart, Upload, Workflow, Wrench } from 'lucide-react';
 import DashboardStep from '@/components/workflow/dashboard-step';
 import DemandStep from '@/components/workflow/demand-step';
@@ -8,7 +9,7 @@ import SupplyStep from '@/components/workflow/supply-step';
 import MasterStep from '@/components/workflow/master-step';
 import CalculationStep from '@/components/workflow/calculation-step';
 import ReportStep from '@/components/workflow/report-step';
-import type { WorkflowStep } from '@/lib/menu';
+import { workflowStepFromSearch, type WorkflowStep } from '@/lib/menu';
 
 export type StepId = WorkflowStep;
 
@@ -22,7 +23,12 @@ const steps: { id: StepId; label: string; short: string; kicker: string; icon: t
 ];
 
 export default function ProcurementApp({ initialStep = 'dashboard' }: { initialStep?: StepId }) {
+  const searchParams = useSearchParams();
+  const urlStep = workflowStepFromSearch(searchParams.toString());
   const [active, setActive] = useState<StepId>(initialStep);
+  useEffect(() => {
+    setActive(urlStep);
+  }, [urlStep]);
   const currentIndex = steps.findIndex((step) => step.id === active);
   const completedCount = Math.max(0, currentIndex);
   const navigate = (index: number) => setActive(steps[Math.max(0, Math.min(index, steps.length - 1))].id);

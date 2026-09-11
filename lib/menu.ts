@@ -72,3 +72,7 @@ export function workflowStepFromParam(value: string | string[] | undefined): Wor
   if (typeof value !== 'string') return 'dashboard';
   return workflowSteps.includes(value as WorkflowStep) ? value as WorkflowStep : 'dashboard';
 }
+
+export function workflowStepFromSearch(search: string): WorkflowStep {
+  return workflowStepFromParam(new URLSearchParams(search).get('step') ?? undefined);
+}
